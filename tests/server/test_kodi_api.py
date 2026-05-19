@@ -517,7 +517,10 @@ def test_kodi_repository_serves_current_addon_metadata_and_package() -> None:
         repository_shortcut = client.get("/repo.zip")
         repository_package = client.get(f"/repo/repository.dashbox/{repository_filename}")
         addon_index = client.get("/repo/plugin.video.dashbox/")
+        icon = client.get("/repo/plugin.video.dashbox/icon.png")
+        icon_head = client.head("/repo/plugin.video.dashbox/icon.png")
         package = client.get(f"/repo/plugin.video.dashbox/{addon_package}")
+        package_sha256 = client.get(f"/repo/plugin.video.dashbox/{addon_package}.sha256")
         package_head = client.head(f"/repo/plugin.video.dashbox/{addon_package}")
 
     assert index.status_code == 200
@@ -546,10 +549,19 @@ def test_kodi_repository_serves_current_addon_metadata_and_package() -> None:
     assert repo_addon.find(".//checksum").text == "http://testserver/repo/addons.xml.md5"
     assert repo_addon.find(".//datadir").text == "http://testserver/repo/"
     assert repo_addon.find(".//artdir").text == "http://testserver/repo/"
-    assert repo_addon.find(".//hashes").text == "false"
+    assert repo_addon.find(".//hashes").text == "sha256"
     assert addon_index.status_code == 200
     assert addon_package in addon_index.text
+    assert icon.status_code == 200
+    assert icon.headers["content-type"] == "image/png"
+    assert icon.content.startswith(b"\x89PNG\r\n\x1a\n")
+    assert icon_head.status_code == 200
+    assert icon_head.headers["content-type"] == "image/png"
+    assert icon_head.content == b""
     assert package.status_code == 200
+    assert package_sha256.status_code == 200
+    assert package_sha256.text == hashlib.sha256(package.content).hexdigest()
+    assert package_sha256.headers["cache-control"] == "no-store"
     assert package_head.status_code == 200
     assert package_head.headers["content-length"] == str(len(package.content))
     assert package_head.headers["content-disposition"] == f'attachment; filename="{addon_package}"'
@@ -574,6 +586,7 @@ def test_kodi_repository_zip_uses_public_base_url_when_configured() -> None:
         addons_md5 = client.get("/repo/addons.xml.md5")
         response = client.get(f"/repo/repository.dashbox/{repository_filename}")
         plugin_response = client.get(f"/repo/plugin.video.dashbox/{addon_package}")
+        plugin_sha256 = client.get(f"/repo/plugin.video.dashbox/{addon_package}.sha256")
 
     assert addons.status_code == 200
     assert (
@@ -590,8 +603,10 @@ def test_kodi_repository_zip_uses_public_base_url_when_configured() -> None:
     assert repo_addon.find(".//checksum").text == "http://dashbox.local:18990/repo/addons.xml.md5"
     assert repo_addon.find(".//datadir").text == "http://dashbox.local:18990/repo/"
     assert repo_addon.find(".//artdir").text == "http://dashbox.local:18990/repo/"
-    assert repo_addon.find(".//hashes").text == "false"
+    assert repo_addon.find(".//hashes").text == "sha256"
     assert plugin_response.status_code == 200
+    assert plugin_sha256.status_code == 200
+    assert plugin_sha256.text == hashlib.sha256(plugin_response.content).hexdigest()
     with zipfile.ZipFile(BytesIO(plugin_response.content)) as archive:
         settings_xml = archive.read("plugin.video.dashbox/resources/settings.xml")
     settings = ET.fromstring(settings_xml)

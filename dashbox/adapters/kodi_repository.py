@@ -12,6 +12,7 @@ ADDON_ID = "plugin.video.dashbox"
 REPOSITORY_ADDON_ID = "repository.dashbox"
 REPOSITORY_ADDON_VERSION = "0.1.1"
 PLUGIN_DIR = Path(__file__).resolve().parents[1] / "kodi" / ADDON_ID
+ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 
 
 @dataclass(frozen=True)
@@ -72,12 +73,22 @@ def package_zip(plugin_dir: Path = PLUGIN_DIR, default_gateway: str = "") -> byt
             archive_name = Path(root_name) / path.relative_to(plugin_dir)
             relative_path = path.relative_to(plugin_dir).as_posix()
             if relative_path == "addon.xml":
-                archive.writestr(str(archive_name), addon_xml_with_version(path, version))
+                archive.writestr(zip_info(str(archive_name)), addon_xml_with_version(path, version))
             elif default_gateway and relative_path == "resources/settings.xml":
-                archive.writestr(str(archive_name), settings_xml_with_default_gateway(path, default_gateway))
+                archive.writestr(zip_info(str(archive_name)), settings_xml_with_default_gateway(path, default_gateway))
             else:
                 archive.write(path, archive_name)
     return output.getvalue()
+
+
+def package_zip_sha256(plugin_dir: Path = PLUGIN_DIR, default_gateway: str = "") -> str:
+    return hashlib.sha256(package_zip(plugin_dir, default_gateway=default_gateway)).hexdigest()
+
+
+def zip_info(filename: str) -> zipfile.ZipInfo:
+    info = zipfile.ZipInfo(filename, ZIP_TIMESTAMP)
+    info.compress_type = zipfile.ZIP_DEFLATED
+    return info
 
 
 def addon_xml_with_version(addon_xml_path: Path, version: str) -> bytes:
@@ -118,8 +129,8 @@ def repository_package_zip(base_url: str) -> bytes:
     addon_xml = repository_addon_xml(repo_base)
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_STORED) as archive:
-        archive.writestr(f"{REPOSITORY_ADDON_ID}/", "")
-        archive.writestr(f"{REPOSITORY_ADDON_ID}/addon.xml", addon_xml)
+        archive.writestr(zipfile.ZipInfo(f"{REPOSITORY_ADDON_ID}/", ZIP_TIMESTAMP), "")
+        archive.writestr(zipfile.ZipInfo(f"{REPOSITORY_ADDON_ID}/addon.xml", ZIP_TIMESTAMP), addon_xml)
     return output.getvalue()
 
 
@@ -135,7 +146,7 @@ def repository_addon_xml(repo_base: str) -> str:
       <checksum>{repo_base}/addons.xml.md5</checksum>
       <datadir zip="true">{repo_base}/</datadir>
       <artdir>{repo_base}/</artdir>
-      <hashes>false</hashes>
+      <hashes>sha256</hashes>
     </dir>
   </extension>
   <extension point="xbmc.addon.metadata">

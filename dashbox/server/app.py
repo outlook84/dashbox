@@ -495,6 +495,15 @@ def create_app(
     ) -> Response:
         repo = current.kodi_repo
         base = base_url(current.config, request)
+        if addon_id == repo.addon_id and filename == "icon.png":
+            icon_path = kodi_repository.PLUGIN_DIR / "icon.png"
+            if not icon_path.exists():
+                raise HTTPException(status_code=404, detail="kodi addon icon not found")
+            return FileResponse(
+                icon_path,
+                media_type="image/png",
+                headers={"Cache-Control": "public, max-age=31536000, immutable"},
+            )
         if addon_id == kodi_repository.REPOSITORY_ADDON_ID and filename in {
             kodi_repository.repository_package_filename(),
             kodi_repository.repository_package_filename(base),
@@ -506,6 +515,12 @@ def create_app(
                     "Content-Disposition": f'attachment; filename="{kodi_repository.repository_package_filename(base)}"',
                     "Cache-Control": "no-store",
                 },
+            )
+        if addon_id == repo.addon_id and filename == f"{repo.package_filename}.sha256":
+            return Response(
+                content=kodi_repository.package_zip_sha256(default_gateway=base),
+                media_type="text/plain; charset=utf-8",
+                headers={"Cache-Control": "no-store"},
             )
         if addon_id != repo.addon_id or filename != repo.package_filename:
             raise HTTPException(status_code=404, detail="kodi addon package not found")
