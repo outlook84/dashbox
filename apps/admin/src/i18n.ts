@@ -440,8 +440,8 @@ export const locale = ref<AdminLocale>(initialLocale());
 
 export function setLocale(next: AdminLocale) {
   locale.value = normalizeLocale(next) || "zh-CN";
-  localStorage.setItem(STORAGE_KEY, locale.value);
-  document.documentElement.lang = locale.value;
+  saveLocale(locale.value);
+  setDocumentLocale(locale.value);
 }
 
 export function t(key: MessageKey): string {
@@ -449,10 +449,17 @@ export function t(key: MessageKey): string {
 }
 
 function initialLocale(): AdminLocale {
-  const saved = normalizeLocale(localStorage.getItem(STORAGE_KEY) || "");
+  const saved = savedLocale();
   if (saved) return saved;
-  const languages = [navigator.language, ...navigator.languages];
-  return languages.some((value) => normalizeLocale(value) === "en-US") ? "en-US" : "zh-CN";
+  return resolvePreferredLocale(browserLanguages()) || "zh-CN";
+}
+
+export function resolvePreferredLocale(languages: readonly string[]): AdminLocale | "" {
+  for (const language of languages) {
+    const normalized = normalizeLocale(language);
+    if (normalized) return normalized;
+  }
+  return "";
 }
 
 function normalizeLocale(value: string): AdminLocale | "" {
@@ -461,4 +468,24 @@ function normalizeLocale(value: string): AdminLocale | "" {
   return "";
 }
 
-document.documentElement.lang = locale.value;
+function savedLocale(): AdminLocale | "" {
+  if (typeof localStorage === "undefined") return "";
+  return normalizeLocale(localStorage.getItem(STORAGE_KEY) || "");
+}
+
+function saveLocale(next: AdminLocale) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(STORAGE_KEY, next);
+}
+
+function browserLanguages(): string[] {
+  if (typeof navigator === "undefined") return [];
+  return [navigator.language, ...(navigator.languages || [])].filter(Boolean);
+}
+
+function setDocumentLocale(next: AdminLocale) {
+  if (typeof document === "undefined") return;
+  document.documentElement.lang = next;
+}
+
+setDocumentLocale(locale.value);
