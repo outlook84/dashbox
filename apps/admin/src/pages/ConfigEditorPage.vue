@@ -85,7 +85,6 @@ const {
   effectivePayloadString,
   effectivePrefixMode,
   effectivePrefixValue,
-  effectivePayloadNumber,
   schemaDefaultNumber,
   codecPreferenceItems,
   codecPreferencePayload,
@@ -96,6 +95,10 @@ const {
   toggleAccessCodeEdit,
   sourceNodesForSub,
   subscriptionCardTitle,
+  subscriptionCardKey,
+  subscriptionPayloadNumberValue,
+  updateSubscriptionPayloadNumber,
+  clearSubscriptionPayloadNumberDraft,
   load,
   validate,
   prepareSave,
@@ -301,7 +304,7 @@ function renderSourceTreeLabel({ option }: { option: TreeOption }): VNodeChild {
         </NButton>
       </template>
       <div class="subscription-form-list">
-        <NCard v-for="(sub, index) in subs" :key="`${sub.id || index}`" size="small" embedded class="subscription-card">
+        <NCard v-for="(sub, index) in subs" :key="subscriptionCardKey(index)" size="small" embedded class="subscription-card">
           <NCollapse :default-expanded-names="[`subscription-${index}`]">
             <NCollapseItem :title="subscriptionCardTitle(sub, index)" :name="`subscription-${index}`">
               <template #header-extra>
@@ -437,18 +440,36 @@ function renderSourceTreeLabel({ option }: { option: TreeOption }): VNodeChild {
                       <NInputNumber
                         v-if="usesBilibiliSearchProvider(activeSubscriptionPayload(sub))"
                         clearable
-                        :value="effectivePayloadNumber(activeSubscriptionPayload(sub), 'bilibili_search_limit', schemaDefaultNumber('bilibili_search_limit'))"
+                        :value="
+                          subscriptionPayloadNumberValue(
+                            index,
+                            activeSubscriptionPayload(sub),
+                            subscriptionConfigKey(sub),
+                            'bilibili_search_limit',
+                            schemaDefaultNumber('bilibili_search_limit')
+                          )
+                        "
                         :min="0"
                         :max="schema?.limits.max_search_limit"
-                        @update:value="(value) => updateSubPayload(index, subscriptionConfigKey(sub), 'bilibili_search_limit', value, { deleteEmpty: true })"
+                        @update:value="(value) => updateSubscriptionPayloadNumber(index, subscriptionConfigKey(sub), 'bilibili_search_limit', value)"
+                        @blur="clearSubscriptionPayloadNumberDraft(index, subscriptionConfigKey(sub), 'bilibili_search_limit')"
                       />
                       <NInputNumber
                         v-else
                         clearable
-                        :value="effectivePayloadNumber(activeSubscriptionPayload(sub), 'ytdlp_search_limit', schemaDefaultNumber('ytdlp_search_limit'))"
+                        :value="
+                          subscriptionPayloadNumberValue(
+                            index,
+                            activeSubscriptionPayload(sub),
+                            subscriptionConfigKey(sub),
+                            'ytdlp_search_limit',
+                            schemaDefaultNumber('ytdlp_search_limit')
+                          )
+                        "
                         :min="0"
                         :max="schema?.limits.max_search_limit"
-                        @update:value="(value) => updateSubPayload(index, subscriptionConfigKey(sub), 'ytdlp_search_limit', value, { deleteEmpty: true })"
+                        @update:value="(value) => updateSubscriptionPayloadNumber(index, subscriptionConfigKey(sub), 'ytdlp_search_limit', value)"
+                        @blur="clearSubscriptionPayloadNumberDraft(index, subscriptionConfigKey(sub), 'ytdlp_search_limit')"
                       />
                     </NFormItem>
                   </NGi>
@@ -459,10 +480,19 @@ function renderSourceTreeLabel({ option }: { option: TreeOption }): VNodeChild {
                       </template>
                       <NInputNumber
                         clearable
-                        :value="effectivePayloadNumber(activeSubscriptionPayload(sub), 'playlist_limit', schemaDefaultNumber('playlist_limit'))"
+                        :value="
+                          subscriptionPayloadNumberValue(
+                            index,
+                            activeSubscriptionPayload(sub),
+                            subscriptionConfigKey(sub),
+                            'playlist_limit',
+                            schemaDefaultNumber('playlist_limit')
+                          )
+                        "
                         :min="0"
                         :max="schema?.limits.max_list_limit"
-                        @update:value="(value) => updateSubPayload(index, String(sub.type || '') === 'kodi' ? 'kodi' : 'tvbox', 'playlist_limit', value, { deleteEmpty: true })"
+                        @update:value="(value) => updateSubscriptionPayloadNumber(index, subscriptionConfigKey(sub), 'playlist_limit', value)"
+                        @blur="clearSubscriptionPayloadNumberDraft(index, subscriptionConfigKey(sub), 'playlist_limit')"
                       />
                     </NFormItem>
                   </NGi>
@@ -473,10 +503,19 @@ function renderSourceTreeLabel({ option }: { option: TreeOption }): VNodeChild {
                       </template>
                       <NInputNumber
                         clearable
-                        :value="effectivePayloadNumber(activeSubscriptionPayload(sub), 'bilibili_list_limit', schemaDefaultNumber('bilibili_list_limit'))"
+                        :value="
+                          subscriptionPayloadNumberValue(
+                            index,
+                            activeSubscriptionPayload(sub),
+                            subscriptionConfigKey(sub),
+                            'bilibili_list_limit',
+                            schemaDefaultNumber('bilibili_list_limit')
+                          )
+                        "
                         :min="0"
                         :max="schema?.limits.max_list_limit"
-                        @update:value="(value) => updateSubPayload(index, String(sub.type || '') === 'kodi' ? 'kodi' : 'tvbox', 'bilibili_list_limit', value, { deleteEmpty: true })"
+                        @update:value="(value) => updateSubscriptionPayloadNumber(index, subscriptionConfigKey(sub), 'bilibili_list_limit', value)"
+                        @blur="clearSubscriptionPayloadNumberDraft(index, subscriptionConfigKey(sub), 'bilibili_list_limit')"
                       />
                     </NFormItem>
                   </NGi>

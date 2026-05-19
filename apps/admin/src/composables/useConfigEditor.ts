@@ -1,4 +1,4 @@
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import type { MessageApi, TreeOption } from "naive-ui";
 import { normalizeConfig, readConfig, readSchema, saveConfig, validateConfig } from "../api";
 import { locale, t } from "../i18n";
@@ -13,6 +13,10 @@ type SelectOption = {
 type CodecOrderItem = SelectOption & {
   enabled: boolean;
 };
+
+type SubscriptionPayloadKey = "kodi" | "tvbox";
+
+let subscriptionDraftKeyCounter = 0;
 
 export function useConfigEditor(message: MessageApi) {
   const loading = ref(false);
@@ -31,6 +35,8 @@ export function useConfigEditor(message: MessageApi) {
   const sourceEditorDraft = ref<Record<string, unknown>[]>([]);
   const effectiveValues = ref<Record<string, unknown>>({});
   const savedSubscriptionIds = ref<Set<string>>(new Set());
+  const subscriptionDraftKeys = ref<string[]>([]);
+  const subscriptionNumberDrafts = ref<Record<string, number | null>>({});
 
   const configObject = computed(() => parseEditorSilently());
   const subs = computed(() => {
@@ -65,6 +71,70 @@ export function useConfigEditor(message: MessageApi) {
     return items.map((value) => ({ label: value === 0 ? zeroLabel : String(value), value }));
   }
 
+  function nextSubscriptionDraftKey() {
+    subscriptionDraftKeyCounter += 1;
+    return `subscription-draft-${subscriptionDraftKeyCounter}`;
+  }
+
+  function resetSubscriptionDraftKeys(value: unknown) {
+    const length = Array.isArray(value) ? value.filter(isRecord).length : 0;
+    subscriptionDraftKeys.value = Array.from({ length }, nextSubscriptionDraftKey);
+    subscriptionNumberDrafts.value = {};
+  }
+
+  function reconcileSubscriptionDraftKeys(length: number) {
+    const keys = subscriptionDraftKeys.value.slice(0, length);
+    while (keys.length < length) {
+      keys.push(nextSubscriptionDraftKey());
+    }
+    subscriptionDraftKeys.value = keys;
+  }
+
+  function subscriptionCardKey(index: number) {
+    return subscriptionDraftKeys.value[index] || `subscription-draft-fallback-${index}`;
+  }
+
+  function subscriptionDraftFieldKey(index: number, payloadKey: SubscriptionPayloadKey, key: string) {
+    return `${subscriptionCardKey(index)}:${payloadKey}:${key}`;
+  }
+
+  function subscriptionPayloadNumberValue(
+    index: number,
+    payload: Record<string, unknown>,
+    payloadKey: SubscriptionPayloadKey,
+    key: string,
+    fallback: number | null
+  ) {
+    const draftKey = subscriptionDraftFieldKey(index, payloadKey, key);
+    return Object.prototype.hasOwnProperty.call(subscriptionNumberDrafts.value, draftKey)
+      ? subscriptionNumberDrafts.value[draftKey]
+      : effectivePayloadNumber(payload, key, fallback);
+  }
+
+  function updateSubscriptionPayloadNumber(
+    index: number,
+    payloadKey: SubscriptionPayloadKey,
+    key: string,
+    value: number | null
+  ) {
+    subscriptionNumberDrafts.value[subscriptionDraftFieldKey(index, payloadKey, key)] = value;
+    updateSubPayload(index, payloadKey, key, value, { deleteEmpty: true });
+  }
+
+  function clearSubscriptionPayloadNumberDraft(index: number, payloadKey: SubscriptionPayloadKey, key: string) {
+    const draftKey = subscriptionDraftFieldKey(index, payloadKey, key);
+    if (!Object.prototype.hasOwnProperty.call(subscriptionNumberDrafts.value, draftKey)) return;
+    const { [draftKey]: _removed, ...nextDrafts } = subscriptionNumberDrafts.value;
+    subscriptionNumberDrafts.value = nextDrafts;
+  }
+
+  function clearSubscriptionDraftsForCard(cardKey: string) {
+    const prefix = `${cardKey}:`;
+    subscriptionNumberDrafts.value = Object.fromEntries(
+      Object.entries(subscriptionNumberDrafts.value).filter(([key]) => !key.startsWith(prefix))
+    );
+  }
+
   function parseEditorSilently(): Record<string, unknown> | null {
     try {
       const value = JSON.parse(editor.value);
@@ -93,6 +163,7 @@ export function useConfigEditor(message: MessageApi) {
     editor.value = JSON.stringify(data.config, null, 2);
     effectiveValues.value = data.effective_values || {};
     savedSubscriptionIds.value = subscriptionIds(data.config.subs);
+    resetSubscriptionDraftKeys(data.config.subs);
   }
 
   function writeConfig(config: Record<string, unknown>) {
@@ -160,6 +231,7 @@ export function useConfigEditor(message: MessageApi) {
       const items = Array.isArray(config.subs) ? [...config.subs] : [];
       const type = defaultSubscriptionType();
       const id = uniqueSubscriptionId(items);
+      subscriptionDraftKeys.value = [nextSubscriptionDraftKey(), ...subscriptionDraftKeys.value];
       items.unshift({
         id,
         type,
@@ -189,9 +261,12 @@ export function useConfigEditor(message: MessageApi) {
   function confirmDeleteSubscription() {
     const index = pendingDeleteSubscriptionIndex.value;
     if (index === null) return;
+    const cardKey = subscriptionCardKey(index);
     updateConfig((config) => {
       const items = Array.isArray(config.subs) ? [...config.subs] : [];
       items.splice(index, 1);
+      subscriptionDraftKeys.value.splice(index, 1);
+      clearSubscriptionDraftsForCard(cardKey);
       config.subs = items;
     });
     cancelDeleteSubscription();
@@ -615,6 +690,12 @@ export function useConfigEditor(message: MessageApi) {
 
   onMounted(load);
 
+  watch(
+    () => subs.value.length,
+    (length) => reconcileSubscriptionDraftKeys(length),
+    { immediate: true }
+  );
+
   return {
     loading,
     saving,
@@ -700,6 +781,10 @@ export function useConfigEditor(message: MessageApi) {
     subscriptionTreeNode,
     sourceNodesForSub,
     subscriptionCardTitle,
+    subscriptionCardKey,
+    subscriptionPayloadNumberValue,
+    updateSubscriptionPayloadNumber,
+    clearSubscriptionPayloadNumberDraft,
     itemTreeNode,
     labelWithId,
     load,
