@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
+      should_build: ${{ steps.matrix.outputs.should_build }}
     steps:
       - name: Checkout tags
         if: github.event_name == 'schedule'
@@ -33,17 +34,21 @@ jobs:
           if [ "${{ github.event_name }}" = "schedule" ]; then
             latest_tag="$(git tag -l 'v*' --sort=-v:refname | head -n 1)"
             if [ -n "$latest_tag" ]; then
-              echo 'matrix={"target":["main","release"]}' >> "$GITHUB_OUTPUT"
+              echo 'matrix={"target":["release"]}' >> "$GITHUB_OUTPUT"
+              echo 'should_build=true' >> "$GITHUB_OUTPUT"
             else
-              echo 'matrix={"target":["main"]}' >> "$GITHUB_OUTPUT"
+              echo 'matrix={"target":["current"]}' >> "$GITHUB_OUTPUT"
+              echo 'should_build=false' >> "$GITHUB_OUTPUT"
             fi
           else
             echo 'matrix={"target":["current"]}' >> "$GITHUB_OUTPUT"
+            echo 'should_build=true' >> "$GITHUB_OUTPUT"
           fi
 
   build:
     name: Build ${{ matrix.target }}
     needs: prepare
+    if: needs.prepare.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -70,23 +75,13 @@ jobs:
           echo "ref_type=tag" >> "$GITHUB_OUTPUT"
           echo "Using latest release tag for scheduled build: $latest_tag"
 
-      - name: Select scheduled main
-        if: github.event_name == 'schedule' && matrix.target == 'main'
-        shell: bash
-        run: git checkout --detach origin/main
-
       - name: Select workflow ref
         id: build_ref
         shell: bash
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            if [ "${{ matrix.target }}" = "release" ]; then
-              ref_name="${{ steps.scheduled_ref.outputs.ref_name }}"
-              ref_type="${{ steps.scheduled_ref.outputs.ref_type }}"
-            else
-              ref_name="main"
-              ref_type="branch"
-            fi
+            ref_name="${{ steps.scheduled_ref.outputs.ref_name }}"
+            ref_type="${{ steps.scheduled_ref.outputs.ref_type }}"
           else
             ref_name="${GITHUB_REF_NAME}"
             ref_type="${GITHUB_REF_TYPE}"
@@ -128,23 +123,6 @@ jobs:
         uses: astral-sh/setup-uv@v8.1.0
         with:
           version: "0.11.8"
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 10.33.4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "22.13"
-          cache: pnpm
-
-      - name: Install frontend dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build frontend assets
-        run: pnpm run build
 
       - name: Update yt-dlp nightly lock
         run: uv lock --upgrade-package yt-dlp --prerelease allow
@@ -191,12 +169,6 @@ jobs:
           printf "%s\n" "${tags[@]}" >> "$GITHUB_OUTPUT"
           printf "EOF\n" >> "$GITHUB_OUTPUT"
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
       - name: Log in to GHCR
         uses: docker/login-action@v4
         with:
@@ -216,8 +188,6 @@ jobs:
           ref_type="${{ steps.build_ref.outputs.type }}"
           if [ "$ref_type" = "tag" ]; then
             tag="v${package_version}-yt-dlp-${ytdlp_version}"
-          elif [ "$ref_name" = "main" ]; then
-            tag="main-py-${package_version}-yt-dlp-${ytdlp_version}"
           else
             tag="${ref_name}-py-${package_version}-yt-dlp-${ytdlp_version}"
           fi
@@ -228,6 +198,35 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
             echo "Image tag does not exist: ${image}:${tag}"
           fi
+
+      - name: Set up QEMU
+        if: steps.existing.outputs.exists != 'true'
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        if: steps.existing.outputs.exists != 'true'
+        uses: docker/setup-buildx-action@v4
+
+      - name: Set up pnpm
+        if: steps.existing.outputs.exists != 'true'
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.33.4
+
+      - name: Set up Node.js
+        if: steps.existing.outputs.exists != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.13"
+          cache: pnpm
+
+      - name: Install frontend dependencies
+        if: steps.existing.outputs.exists != 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend assets
+        if: steps.existing.outputs.exists != 'true'
+        run: pnpm run build
 
       - name: Build and push image
         if: steps.existing.outputs.exists != 'true'
