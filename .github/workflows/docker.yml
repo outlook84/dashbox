@@ -136,7 +136,9 @@ jobs:
         id: ytdlp
         shell: bash
         run: |
-          version="$(uv tree --locked --package yt-dlp --depth 0 | sed -n 's/^yt-dlp v//p' | head -n 1)"
+          version="$(
+            python3 -c 'import tomllib; data = tomllib.load(open("uv.lock", "rb")); print(next(package["version"] for package in data["package"] if package["name"] == "yt-dlp"))'
+          )"
           if [ -z "$version" ]; then
             echo "Unable to resolve yt-dlp version" >&2
             exit 1
