@@ -1,3 +1,4 @@
+import hashlib
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -69,6 +70,19 @@ def test_kodi_repository_uses_visible_version_file() -> None:
 
     assert kodi_repository.addon_version(PLUGIN) == addon_version()
     assert addons.find("addon").attrib["version"] == addon_version()
+
+
+def test_kodi_repository_addons_xml_changes_with_base_url() -> None:
+    first = kodi_repository.addons_xml(PLUGIN, base_url="http://dashbox.local:18990")
+    second = kodi_repository.addons_xml(PLUGIN, base_url="https://dashbox.example.test")
+
+    assert first != second
+    fingerprint = kodi_repository.repository_base_fingerprint("http://dashbox.local:18990").encode("utf-8")
+    assert fingerprint in first
+    assert kodi_repository.addons_xml_md5(
+        PLUGIN,
+        base_url="http://dashbox.local:18990",
+    ) == hashlib.md5(first).hexdigest()
 
 
 def test_kodi_packaging_ignores_addon_xml_template_version(tmp_path: Path) -> None:

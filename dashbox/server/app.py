@@ -449,16 +449,16 @@ def create_app(
         return Response(content=content, media_type="text/html; charset=utf-8")
 
     @app.get("/repo/addons.xml")
-    async def kodi_repository_addons(current: AppState = Depends(get_state)) -> Response:
+    async def kodi_repository_addons(request: Request, current: AppState = Depends(get_state)) -> Response:
         return Response(
-            content=current.kodi_repo.addons_xml,
+            content=kodi_repository.addons_xml(base_url=base_url(current.config, request)),
             media_type="application/xml; charset=utf-8",
         )
 
     @app.get("/repo/addons.xml.md5")
-    async def kodi_repository_addons_md5(current: AppState = Depends(get_state)) -> Response:
+    async def kodi_repository_addons_md5(request: Request, current: AppState = Depends(get_state)) -> Response:
         return Response(
-            content=current.kodi_repo.addons_xml_md5,
+            content=kodi_repository.addons_xml_md5(base_url=base_url(current.config, request)),
             media_type="text/plain; charset=utf-8",
         )
 

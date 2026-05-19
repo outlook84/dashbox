@@ -526,6 +526,10 @@ def test_kodi_repository_serves_current_addon_metadata_and_package() -> None:
     assert addons.status_code == 200
     assert b'id="plugin.video.dashbox"' in addons.content
     assert f'version="{addon_version}"'.encode("utf-8") in addons.content
+    assert (
+        hashlib.sha256(b"http://testserver/repo/").hexdigest()[:8].encode("utf-8")
+        in addons.content
+    )
     assert addons_md5.text == hashlib.md5(addons.content).hexdigest()
     assert repository_index.status_code == 200
     assert repository_filename in repository_index.text
@@ -566,9 +570,17 @@ def test_kodi_repository_zip_uses_public_base_url_when_configured() -> None:
     addon_package = f"plugin.video.dashbox-{kodi_repository.addon_version()}.zip"
 
     with no_lifespan_test_client(server.create_app(config)) as client:
+        addons = client.get("/repo/addons.xml")
+        addons_md5 = client.get("/repo/addons.xml.md5")
         response = client.get(f"/repo/repository.dashbox/{repository_filename}")
         plugin_response = client.get(f"/repo/plugin.video.dashbox/{addon_package}")
 
+    assert addons.status_code == 200
+    assert (
+        hashlib.sha256(b"http://dashbox.local:18990/repo/").hexdigest()[:8].encode("utf-8")
+        in addons.content
+    )
+    assert addons_md5.text == hashlib.md5(addons.content).hexdigest()
     assert response.status_code == 200
     assert response.headers["content-disposition"] == f'attachment; filename="{repository_filename}"'
     with zipfile.ZipFile(BytesIO(response.content)) as archive:

@@ -46,16 +46,19 @@ def package_filename(plugin_dir: Path = PLUGIN_DIR) -> str:
     return f"{ADDON_ID}-{addon_version(plugin_dir)}.zip"
 
 
-def addons_xml(plugin_dir: Path = PLUGIN_DIR) -> bytes:
+def addons_xml(plugin_dir: Path = PLUGIN_DIR, base_url: str = "") -> bytes:
     addon_root = ET.parse(plugin_dir / "addon.xml").getroot()
     addon_root.attrib["version"] = addon_version(plugin_dir)
     root = ET.Element("addons")
+    if base_url:
+        fingerprint = repository_base_fingerprint(base_url)
+        root.append(ET.Comment(f" dashbox-repo-base-fingerprint: {fingerprint} "))
     root.append(addon_root)
     return ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
 
-def addons_xml_md5(plugin_dir: Path = PLUGIN_DIR) -> str:
-    return hashlib.md5(addons_xml(plugin_dir)).hexdigest()
+def addons_xml_md5(plugin_dir: Path = PLUGIN_DIR, base_url: str = "") -> str:
+    return hashlib.md5(addons_xml(plugin_dir, base_url=base_url)).hexdigest()
 
 
 def package_zip(plugin_dir: Path = PLUGIN_DIR, default_gateway: str = "") -> bytes:
