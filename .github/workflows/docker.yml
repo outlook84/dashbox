@@ -1,0 +1,209 @@
+name: Docker
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 */6 * * *"
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Checkout tags
+        if: github.event_name == 'schedule'
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Select build targets
+        id: matrix
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            latest_tag="$(git tag -l 'v*' --sort=-v:refname | head -n 1)"
+            if [ -n "$latest_tag" ]; then
+              echo 'matrix={"target":["main","release"]}' >> "$GITHUB_OUTPUT"
+            else
+              echo 'matrix={"target":["main"]}' >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo 'matrix={"target":["current"]}' >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Select scheduled release tag
+        id: scheduled_ref
+        if: github.event_name == 'schedule' && matrix.target == 'release'
+        shell: bash
+        run: |
+          latest_tag="$(git tag -l 'v*' --sort=-v:refname | head -n 1)"
+          if [ -z "$latest_tag" ]; then
+            echo "No v* release tag found" >&2
+            exit 1
+          fi
+          git checkout --detach "$latest_tag"
+          echo "ref_name=$latest_tag" >> "$GITHUB_OUTPUT"
+          echo "ref_type=tag" >> "$GITHUB_OUTPUT"
+          echo "Using latest release tag for scheduled build: $latest_tag"
+
+      - name: Select scheduled main
+        if: github.event_name == 'schedule' && matrix.target == 'main'
+        shell: bash
+        run: git checkout --detach origin/main
+
+      - name: Select workflow ref
+        id: build_ref
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ matrix.target }}" = "release" ]; then
+              ref_name="${{ steps.scheduled_ref.outputs.ref_name }}"
+              ref_type="${{ steps.scheduled_ref.outputs.ref_type }}"
+            else
+              ref_name="main"
+              ref_type="branch"
+            fi
+          else
+            ref_name="${GITHUB_REF_NAME}"
+            ref_type="${GITHUB_REF_TYPE}"
+          fi
+          ref_name="${ref_name//\//-}"
+          echo "name=$ref_name" >> "$GITHUB_OUTPUT"
+          echo "type=$ref_type" >> "$GITHUB_OUTPUT"
+
+      - name: Normalize image name
+        id: image
+        shell: bash
+        run: |
+          image="${REGISTRY}/${IMAGE_NAME}"
+          echo "name=${image,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          version: "0.11.8"
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.33.4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.13"
+          cache: pnpm
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend assets
+        run: pnpm run build
+
+      - name: Update yt-dlp nightly lock
+        run: uv lock --upgrade-package yt-dlp --prerelease allow
+
+      - name: Resolve yt-dlp version
+        id: ytdlp
+        shell: bash
+        run: |
+          version="$(uv tree --locked --package yt-dlp --depth 0 | sed -n 's/^yt-dlp v//p' | head -n 1)"
+          if [ -z "$version" ]; then
+            echo "Unable to resolve yt-dlp version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build Docker tags
+        id: tags
+        shell: bash
+        run: |
+          image="${{ steps.image.outputs.name }}"
+          ytdlp_version="${{ steps.ytdlp.outputs.version }}"
+          ref_name="${{ steps.build_ref.outputs.name }}"
+          ref_type="${{ steps.build_ref.outputs.type }}"
+          tags=()
+
+          if [ "$ref_type" = "tag" ]; then
+            tags+=("${image}:${ref_name}")
+            tags+=("${image}:${ref_name}-yt-dlp-${ytdlp_version}")
+            tags+=("${image}:latest")
+          elif [ "$ref_name" = "main" ]; then
+            tags+=("${image}:main")
+            tags+=("${image}:main-yt-dlp-${ytdlp_version}")
+          else
+            tags+=("${image}:${ref_name}")
+            tags+=("${image}:${ref_name}-yt-dlp-${ytdlp_version}")
+          fi
+
+          printf "tags<<EOF\n" >> "$GITHUB_OUTPUT"
+          printf "%s\n" "${tags[@]}" >> "$GITHUB_OUTPUT"
+          printf "EOF\n" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check existing scheduled image
+        id: existing
+        if: github.event_name == 'schedule'
+        shell: bash
+        run: |
+          image="${{ steps.image.outputs.name }}"
+          tag="${{ steps.build_ref.outputs.name }}-yt-dlp-${{ steps.ytdlp.outputs.version }}"
+          if docker buildx imagetools inspect "${image}:${tag}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Image tag already exists: ${image}:${tag}"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Image tag does not exist: ${image}:${tag}"
+          fi
+
+      - name: Build and push image
+        if: steps.existing.outputs.exists != 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=gha,scope=docker-${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=docker-${{ matrix.target }}

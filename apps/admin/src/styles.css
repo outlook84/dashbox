@@ -1,0 +1,732 @@
+/* ============================================================
+   Design Tokens — Dashbox Admin
+   Light: orange accent / warm stone neutrals
+   Dark:  zinc-900 surface / amber-gold accent
+   ============================================================ */
+:root {
+  /* Brand — orange (light mode) */
+  --color-brand:        #ea580c; /* orange-600  — primary action    */
+  --color-brand-hover:  #c2410c; /* orange-700  — hover/pressed      */
+  --color-brand-focus:  #ea580c; /* focus ring                       */
+  --color-brand-subtle: #fff7ed; /* orange-50   — tinted bg          */
+  --color-brand-tint:   #ffedd5; /* orange-100  — selected item bg   */
+  --color-brand-border: #fed7aa; /* orange-200  — border on tinted   */
+  --color-brand-text:   #ffffff; /* text on brand bg                 */
+
+  /* Neutral surface — warm stone */
+  --color-bg:           #fafaf9; /* stone-50                         */
+  --color-surface:      #ffffff; /* card / topbar                    */
+  --color-border:       #e7e5e4; /* stone-200                        */
+  --color-border-subtle:#f5f5f4; /* stone-100  — dividers            */
+
+  /* Text */
+  --color-text:         #1c1917; /* stone-900                        */
+  --color-text-muted:   #78716c; /* stone-500                        */
+  --color-text-disabled:#a8a29e; /* stone-400                        */
+
+  /* Tab pill container */
+  --color-tab-bg:       #f5f5f4; /* stone-100                        */
+  --color-tab-border:   #e7e5e4; /* stone-200                        */
+
+  /* Misc */
+  --color-drag-handle:  #d6d3d1; /* stone-300                        */
+  --color-nested-border:#d6d3d1; /* stone-300                        */
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+}
+
+/* Dark mode — zinc surface + amber-gold accent
+   Applies when: system is dark (and no manual override)
+               OR manual data-theme="dark" is set on <html>
+*/
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-brand:        #f59e0b;
+    --color-brand-hover:  #fbbf24;
+    --color-brand-focus:  #f59e0b;
+    --color-brand-subtle: #1c1400;
+    --color-brand-tint:   #292100;
+    --color-brand-border: #4a3800;
+    --color-brand-text:   #18181b;
+    --color-bg:           #18181b;
+    --color-surface:      #27272a;
+    --color-border:       #3f3f46;
+    --color-border-subtle:#27272a;
+    --color-text:         #fafafa;
+    --color-text-muted:   #a1a1aa;
+    --color-text-disabled:#71717a;
+    --color-tab-bg:       #27272a;
+    --color-tab-border:   #3f3f46;
+    --color-drag-handle:  #52525b;
+    --color-nested-border:#3f3f46;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-brand:        #f59e0b;
+  --color-brand-hover:  #fbbf24;
+  --color-brand-focus:  #f59e0b;
+  --color-brand-subtle: #1c1400;
+  --color-brand-tint:   #292100;
+  --color-brand-border: #4a3800;
+  --color-brand-text:   #18181b;
+  --color-bg:           #18181b;
+  --color-surface:      #27272a;
+  --color-border:       #3f3f46;
+  --color-border-subtle:#27272a;
+  --color-text:         #fafafa;
+  --color-text-muted:   #a1a1aa;
+  --color-text-disabled:#71717a;
+  --color-tab-bg:       #27272a;
+  --color-tab-border:   #3f3f46;
+  --color-drag-handle:  #52525b;
+  --color-nested-border:#3f3f46;
+}
+
+/* ============================================================
+   Reset & Base
+   ============================================================ */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    Bahnschrift, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC",
+    sans-serif;
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+/* ============================================================
+   Boot / Login
+   ============================================================ */
+.boot-screen,
+.login-screen {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.boot-screen {
+  color: var(--color-text-muted);
+  font-size: 18px;
+}
+
+.login-card {
+  width: min(420px, calc(100vw - 32px));
+}
+
+.login-title-row {
+  margin-bottom: 24px;
+}
+
+.login-brand {
+  align-items: center;
+  display: inline-flex;
+  gap: 12px;
+  min-width: 0;
+}
+
+.login-brand-mark {
+  align-items: center;
+  background: var(--color-brand-subtle);
+  border: 1px solid var(--color-brand-border);
+  border-radius: 8px;
+  color: var(--color-brand-hover);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+
+.login-card h1 {
+  font-size: 24px;
+}
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.admin-layout {
+  min-height: 100%;
+}
+
+.brand {
+  align-items: center;
+  align-self: center;
+  display: inline-flex;
+  gap: 10px;
+  grid-column: 1;
+  min-width: 160px;
+}
+
+.brand-mark {
+  align-items: center;
+  background: var(--color-brand-subtle);
+  border: 1px solid var(--color-brand-border);
+  border-radius: var(--radius-md);
+  color: var(--color-brand-hover);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.brand-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ============================================================
+   Topbar
+   ============================================================ */
+.topbar {
+  align-items: center;
+  background: var(--color-surface);
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) auto minmax(160px, 1fr);
+  min-height: 64px;
+  padding: 0 20px;
+}
+
+.topbar-tabs {
+  align-self: center;
+  background: var(--color-tab-bg);
+  border: 1px solid var(--color-tab-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  gap: 4px;
+  grid-column: 2;
+  justify-self: center;
+  min-width: 0;
+  padding: 3px;
+}
+
+.topbar-tab {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  min-height: 34px;
+  min-width: 88px;
+  padding: 0 16px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.topbar-tab:hover,
+.topbar-tab:focus-visible {
+  background: var(--color-surface);
+  color: var(--color-brand);
+}
+
+.topbar-tab:focus-visible {
+  outline: 2px solid var(--color-brand-focus);
+  outline-offset: 1px;
+}
+
+.topbar-tab-active {
+  background: var(--color-brand);
+  color: var(--color-brand-text);
+  font-weight: 650;
+}
+
+.topbar-tab-active:hover,
+.topbar-tab-active:focus-visible {
+  background: var(--color-brand-hover);
+  color: var(--color-brand-text);
+}
+
+.topbar-actions {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.locale-select {
+  width: 116px;
+}
+
+/* ============================================================
+   Content & Page Layout
+   ============================================================ */
+.content {
+  padding: 24px;
+}
+
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0 auto;
+  max-width: 1200px;
+  width: 100%;
+}
+
+.page-stack.config-page {
+  max-width: 1440px;
+  min-height: calc(100vh - 98px);
+}
+
+.page-stack.narrow {
+  max-width: 560px;
+}
+
+.page-heading {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.page-heading-actions-only {
+  justify-content: flex-end;
+}
+
+.page-heading h2 {
+  font-size: 22px;
+}
+
+.page-heading-meta {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+/* ============================================================
+   JSON Editor
+   ============================================================ */
+.json-editor textarea {
+  font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* ============================================================
+   Subscription
+   ============================================================ */
+.subscription-form-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.subscription-tabs {
+  margin-top: 4px;
+}
+
+.subscription-card :deep(.n-collapse .n-collapse-item .n-collapse-item__header-main) {
+  font-weight: 600;
+}
+
+.subscription-tabs :deep(.n-tab-pane) {
+  padding-top: 12px;
+}
+
+/* ============================================================
+   Source Tree
+   ============================================================ */
+.source-tree-label {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.source-tree-label-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.source-tree-open-link {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 20px;
+  justify-content: center;
+  text-decoration: none;
+  width: 20px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.source-tree-open-link:hover,
+.source-tree-open-link:focus-visible {
+  background: var(--color-brand-tint);
+  color: var(--color-brand);
+}
+
+/* ============================================================
+   Cookie Status
+   ============================================================ */
+.cookie-status {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ============================================================
+   Sources Editor Modal
+   ============================================================ */
+.sources-preview-tab {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.sources-editor-modal {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 32px);
+  width: min(980px, calc(100vw - 32px));
+}
+
+.sources-editor,
+.source-items-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.sources-editor-modal .n-card__content,
+.sources-editor-modal .n-card__footer {
+  flex: 0 0 auto;
+}
+
+.sources-editor-modal .n-card__content {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sources-editor-modal .n-card__footer {
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.sources-editor-modal .sources-editor {
+  max-height: min(70vh, 760px);
+  min-height: 0;
+}
+
+.sources-editor > .source-tree-collapse,
+.sources-editor > .source-items-editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.source-editor-actions {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+}
+
+.source-tree-collapse {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  width: 100%;
+}
+
+.sources-editor .source-tree-collapse .n-collapse-item {
+  border-top: 1px solid var(--color-border-subtle);
+  margin: 0;
+  margin-left: 0;
+}
+
+.sources-editor .source-tree-collapse .n-collapse-item:first-child {
+  border-top: 0;
+}
+
+.sources-editor .source-tree-collapse .n-collapse-item__header {
+  align-items: center;
+  display: flex;
+  min-height: 38px;
+  padding: 6px 8px;
+}
+
+.source-sources-collapse > .n-collapse-item > .n-collapse-item__header {
+  padding-left: 14px;
+}
+
+.sources-editor .source-tree-collapse .n-collapse-item__header-main {
+  align-items: center;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 28px;
+  min-width: 0;
+}
+
+.sources-editor .source-tree-collapse .n-collapse-item__header-extra,
+.sources-editor .source-tree-collapse .n-collapse-item-arrow {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  min-height: 28px;
+}
+
+.sources-editor .source-tree-collapse .source-tree-node-active > .n-collapse-item__header {
+  background: var(--color-brand-tint);
+}
+
+.sources-editor .source-tree-collapse .n-collapse-item__content-inner {
+  padding: 4px 10px 10px 16px;
+}
+
+.sources-editor .source-items-editor-nested .source-tree-collapse .n-collapse-item__content-inner {
+  padding-left: 12px;
+}
+
+.sources-editor .source-items-editor-nested .source-tree-collapse .n-collapse-item__header {
+  padding-left: 4px;
+}
+
+/* ============================================================
+   Source Node
+   ============================================================ */
+.source-node-title {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 6px;
+  line-height: 1.35;
+  min-height: 28px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  width: 100%;
+}
+
+.source-node-title > .n-icon,
+.source-node-icon-link,
+.source-node-title > span {
+  align-items: center;
+  display: inline-flex;
+}
+
+.source-node-icon-link {
+  color: inherit;
+  height: 20px;
+  justify-content: center;
+  text-decoration: none;
+  width: 20px;
+  transition: color 0.15s;
+}
+
+.source-node-icon-link:hover {
+  color: var(--color-brand-hover);
+}
+
+.source-node-title > span {
+  min-height: 20px;
+}
+
+.source-node-title-active {
+  color: var(--color-brand-hover);
+  font-weight: 650;
+}
+
+.source-selection-label {
+  background: var(--color-brand-subtle);
+  border: 1px solid var(--color-brand-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 4px 8px;
+}
+
+.source-inline-input {
+  min-width: 180px;
+  width: min(360px, 42vw);
+}
+
+.source-node-children {
+  width: 100%;
+}
+
+.source-items-editor-nested {
+  border-left: 2px solid var(--color-nested-border);
+  margin-left: -8px;
+  padding-left: 0;
+}
+
+.source-items-editor .n-form-item {
+  margin-bottom: 8px;
+}
+
+/* ============================================================
+   Form Hints
+   ============================================================ */
+.field-label {
+  align-items: center;
+  display: inline-flex;
+  gap: 5px;
+  min-width: 0;
+}
+
+.field-label-help {
+  color: var(--color-text-muted);
+  cursor: help;
+  flex: 0 0 auto;
+}
+
+.field-label-help:hover {
+  color: var(--color-brand-hover);
+}
+
+.form-hint {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   Access Code / User Agent
+   ============================================================ */
+.user-agent-field {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.access-code-edit-field {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.access-code-edit-field .n-input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+/* ============================================================
+   Codec Order Editor
+   ============================================================ */
+.codec-order-editor {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+.codec-row {
+  align-items: center;
+  background: var(--color-tab-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  gap: 6px;
+  min-height: 30px;
+  padding: 3px 4px 3px 6px;
+}
+
+.codec-drag-handle {
+  align-items: center;
+  color: var(--color-drag-handle);
+  cursor: grab;
+  display: inline-flex;
+  height: 22px;
+}
+
+.codec-row-dragging {
+  opacity: 0.55;
+}
+
+/* ============================================================
+   Naive UI Overrides
+   ============================================================ */
+.n-input {
+  --n-text-color-disabled: var(--color-text);
+}
+
+.n-input.n-input--disabled .n-input__input-el,
+.n-input.n-input--disabled .n-input__textarea-el {
+  color: var(--color-text);
+  -webkit-text-fill-color: var(--color-text);
+}
+
+.n-input .n-input__input-el:-webkit-autofill,
+.n-input .n-input__input-el:-webkit-autofill:hover,
+.n-input .n-input__input-el:-webkit-autofill:focus {
+  box-shadow: 0 0 0 1000px var(--color-surface) inset;
+  -webkit-text-fill-color: var(--color-text);
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 760px) {
+  .admin-layout {
+    display: block;
+  }
+
+  .topbar {
+    gap: 8px 12px;
+    grid-template-columns: 1fr auto;
+    padding: 10px 16px 0;
+  }
+
+  .brand {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .topbar-actions {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    margin-left: auto;
+  }
+
+  .topbar-tabs {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
+  }
+
+  .topbar-tab {
+    flex: 1 1 0;
+    min-height: 36px;
+    min-width: 0;
+    padding: 0 8px;
+  }
+
+  .content {
+    padding: 16px;
+  }
+
+  .page-heading {
+    align-items: center;
+  }
+}

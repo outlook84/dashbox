@@ -1,0 +1,15 @@
+config.json
+config.json.bak
+admin_access_code_hash
+*.log
+node_modules
+__pycache__
+dashbox*.js
+.pytest_cache
+dashbox.egg-info/
+scripts/probe*
+.tmp/
+data/
+kodi/plugin.video.dashbox*.zip
+dashbox/assets/admin/
+README.node_modules

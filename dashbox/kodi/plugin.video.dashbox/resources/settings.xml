@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings version="1">
+  <section id="plugin.video.dashbox">
+    <category id="connection" label="30000">
+      <group id="1">
+        <setting id="gateway" label="30001" type="string">
+          <level>0</level>
+          <default>http://127.0.0.1:18990</default>
+          <control type="edit" format="string">
+            <heading>30001</heading>
+          </control>
+        </setting>
+        <setting id="sub_id" label="30002" type="string">
+          <level>0</level>
+          <constraints>
+            <allowempty>true</allowempty>
+          </constraints>
+          <default></default>
+          <control type="edit" format="string">
+            <heading>30002</heading>
+          </control>
+        </setting>
+        <setting id="access_code" label="30003" type="string">
+          <level>4</level>
+          <constraints>
+            <allowempty>true</allowempty>
+          </constraints>
+          <default></default>
+          <control type="edit" format="string">
+            <heading>30003</heading>
+            <hidden>true</hidden>
+          </control>
+        </setting>
+        <setting id="access_token" label="30004" type="string">
+          <level>4</level>
+          <constraints>
+            <allowempty>true</allowempty>
+          </constraints>
+          <default></default>
+          <control type="edit" format="string">
+            <heading>30004</heading>
+            <hidden>true</hidden>
+          </control>
+        </setting>
+      </group>
+    </category>
+    <category id="playback" label="30100">
+      <group id="1">
+        <setting id="max_video_height" label="30103" type="integer">
+          <level>1</level>
+          <default>0</default>
+          <constraints>
+            <options>
+              <option label="30110">0</option>
+              <option label="30111">480</option>
+              <option label="30112">720</option>
+              <option label="30113">1080</option>
+              <option label="30114">1440</option>
+              <option label="30115">2160</option>
+              <option label="30116">4320</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer">
+            <heading>30103</heading>
+          </control>
+        </setting>
+        <setting id="max_video_fps" label="30104" type="integer">
+          <level>1</level>
+          <default>0</default>
+          <constraints>
+            <options>
+              <option label="30110">0</option>
+              <option label="30117">24</option>
+              <option label="30118">30</option>
+              <option label="30119">60</option>
+              <option label="30120">120</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer">
+            <heading>30104</heading>
+          </control>
+        </setting>
+        <setting id="danmaku_enabled" label="30106" type="boolean">
+          <level>1</level>
+          <default>true</default>
+          <control type="toggle" />
+        </setting>
+        <setting id="danmaku_font_size" label="30105" type="integer">
+          <level>1</level>
+          <default>32</default>
+          <constraints>
+            <options>
+              <option label="30121">24</option>
+              <option label="30122">28</option>
+              <option label="30123">32</option>
+              <option label="30124">36</option>
+              <option label="30125">42</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer">
+            <heading>30105</heading>
+          </control>
+        </setting>
+        <setting id="youtube_subtitles" label="30107" type="boolean">
+          <level>1</level>
+          <default>false</default>
+          <control type="toggle" />
+        </setting>
+      </group>
+    </category>
+    <category id="video-codecs" label="30101">
+      <group id="1">
+        <setting id="video_codec_1" label="30131" type="integer">
+          <level>1</level>
+          <default>1</default>
+          <constraints>
+            <options>
+              <option label="30130">0</option>
+              <option label="30141">1</option>
+              <option label="30142">2</option>
+              <option label="30143">3</option>
+              <option label="30144">4</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer"><heading>30131</heading></control>
+        </setting>
+        <setting id="video_codec_2" label="30132" type="integer">
+          <level>1</level>
+          <default>2</default>
+          <constraints>
+            <options>
+              <option label="30130">0</option>
+              <option label="30141">1</option>
+              <option label="30142">2</option>
+              <option label="30143">3</option>
+              <option label="30144">4</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer"><heading>30132</heading></control>
+        </setting>
+        <setting id="video_codec_3" label="30133" type="integer">
+          <level>1</level>
+          <default>3</default>
+          <constraints>
+            <options>
+              <option label="30130">0</option>
+              <option label="30141">1</option>
+              <option label="30142">2</option>
+              <option label="30143">3</option>
+              <option label="30144">4</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer"><heading>30133</heading></control>
+        </setting>
+        <setting id="video_codec_4" label="30134" type="integer">
+          <level>1</level>
+          <default>4</default>
+          <constraints>
+            <options>
+              <option label="30130">0</option>
+              <option label="30141">1</option>
+              <option label="30142">2</option>
+              <option label="30143">3</option>
+              <option label="30144">4</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer"><heading>30134</heading></control>
+        </setting>
+      </group>
+    </category>
+    <category id="audio-codecs" label="30102">
+      <group id="1">
+        <setting id="audio_codec_1" label="30151" type="integer">
+          <level>1</level>
+          <default>1</default>
+          <constraints>
+            <options>
+              <option label="30130">0</option>
+              <option label="30161">1</option>
+              <option label="30162">2</option>
+              <option label="30163">3</option>
+              <option label="30164">4</option>
+              <option label="30165">5</option>
+              <option label="30166">6</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer"><heading>30151</heading></control>
+        </setting>
+        <setting id="audio_codec_2" label="30152" type="integer">
+          <level>1</level>
+          <default>2</default>
+          <constraints>
+            <options>
+              <option label="30130">0</option>
+              <option label="30161">1</option>
+              <option label="30162">2</option>
+              <option label="30163">3</option>
+              <option label="30164">4</option>
+              <option label="30165">5</option>
+              <option label="30166">6</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer"><heading>30152</heading></control>
+        </setting>
+        <setting id="audio_codec_3" label="30153" type="integer">
+          <level>1</level>
+          <default>3</default>
+          <constraints>
+            <options>
+              <option label="30130">0</option>
+              <option label="30161">1</option>
+              <option label="30162">2</option>
+              <option label="30163">3</option>
+              <option label="30164">4</option>
+              <option label="30165">5</option>
+              <option label="30166">6</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer"><heading>30153</heading></control>
+        </setting>
+        <setting id="audio_codec_4" label="30154" type="integer">
+          <level>1</level>
+          <default>4</default>
+          <constraints>
+            <options>
+              <option label="30130">0</option>
+              <option label="30161">1</option>
+              <option label="30162">2</option>
+              <option label="30163">3</option>
+              <option label="30164">4</option>
+              <option label="30165">5</option>
+              <option label="30166">6</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer"><heading>30154</heading></control>
+        </setting>
+        <setting id="audio_codec_5" label="30155" type="integer">
+          <level>1</level>
+          <default>5</default>
+          <constraints>
+            <options>
+              <option label="30130">0</option>
+              <option label="30161">1</option>
+              <option label="30162">2</option>
+              <option label="30163">3</option>
+              <option label="30164">4</option>
+              <option label="30165">5</option>
+              <option label="30166">6</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer"><heading>30155</heading></control>
+        </setting>
+        <setting id="audio_codec_6" label="30156" type="integer">
+          <level>1</level>
+          <default>6</default>
+          <constraints>
+            <options>
+              <option label="30130">0</option>
+              <option label="30161">1</option>
+              <option label="30162">2</option>
+              <option label="30163">3</option>
+              <option label="30164">4</option>
+              <option label="30165">5</option>
+              <option label="30166">6</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="integer"><heading>30156</heading></control>
+        </setting>
+      </group>
+    </category>
+  </section>
+</settings>

@@ -1,0 +1,15 @@
+.git
+.venv
+node_modules
+apps/*/node_modules
+__pycache__
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+data
+config.json
+config.json.bak
+admin_access_code_hash
+*.log
+.tmp/

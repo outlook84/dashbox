@@ -1,0 +1,112 @@
+{
+  "proxy_media_idle_ttl_seconds": 21600,
+  "proxy_dash_media_url": false,
+  "ytdlp_concurrency": 8,
+  "log_level": "info",
+  "user_agent": "",
+  "cookies_from_browser": {
+    "mode": "disabled"
+  },
+  "subs": [
+    {
+      "id": "main",
+      "type": "tvbox",
+      "auth_mode": "anonymous",
+      "tvbox": {
+        "site_key": "dashbox",
+        "site_name": "Dashbox",
+        "locale": "zh-CN",
+        "search_provider": "ytdlp",
+        "ytdlp_search_prefix": {
+          "mode": "youtube"
+        },
+        "ytdlp_search_limit": 30,
+        "bilibili_search_limit": 30,
+        "playlist_limit": 100,
+        "bilibili_list_limit": 100,
+        "video_codec_preferences": [
+          { "codec": "h264", "enabled": true },
+          { "codec": "hevc", "enabled": true },
+          { "codec": "vp9", "enabled": true },
+          { "codec": "av01", "enabled": true }
+        ],
+        "audio_codec_preferences": [
+          { "codec": "aac", "enabled": true },
+          { "codec": "opus", "enabled": true },
+          { "codec": "eac3", "enabled": true },
+          { "codec": "ac3", "enabled": true },
+          { "codec": "flac", "enabled": true },
+          { "codec": "other", "enabled": true }
+        ],
+        "max_video_height": 0,
+        "max_video_fps": 0,
+        "youtube_subtitles": false,
+        "vod_style": "list",
+        "sources": [
+          {
+            "id": "bilibili",
+            "name": "Bilibili",
+            "items": [
+              {
+                "id": "example_bilibili_video",
+                "url": "https://www.bilibili.com/video/BV1xx411c7mD",
+                "title": "可选标题覆盖",
+                "pic": "",
+                "remarks": "可配置视频、合集或列表 URL"
+              }
+            ]
+          },
+          {
+            "id": "youtube",
+            "name": "YouTube",
+            "items": [
+              {
+                "id": "example_youtube_video",
+                "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                "pic": "",
+                "remarks": "示例"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "kodi-main",
+      "type": "kodi",
+      "auth_mode": "anonymous",
+      "kodi": {
+        "search_provider": "ytdlp",
+        "ytdlp_search_prefix": {
+          "mode": "youtube"
+        },
+        "ytdlp_search_limit": 30,
+        "bilibili_search_limit": 30,
+        "playlist_limit": 100,
+        "bilibili_list_limit": 100,
+        "sources": [
+          {
+            "id": "pinned_video",
+            "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            "title": "Pinned Video",
+            "pic": "",
+            "remarks": "Kodi 顶层可直接放 URL 项"
+          },
+          {
+            "id": "youtube",
+            "name": "YouTube",
+            "items": [
+              {
+                "id": "google_developers",
+                "url": "https://www.youtube.com/@GoogleDevelopers/videos",
+                "title": "Google Developers",
+                "pic": "",
+                "remarks": "Kodi 顶层也可放文件夹"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

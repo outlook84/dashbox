@@ -1,0 +1,34 @@
+{
+  "name": "dashbox-tvbox-spider",
+  "private": true,
+  "license": "GPL-3.0-only",
+  "packageManager": "pnpm@10.33.4",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @dashbox/admin dev",
+    "admin:dev": "pnpm --filter @dashbox/admin dev",
+    "build": "pnpm -r build",
+    "build:admin": "pnpm --filter @dashbox/admin build",
+    "build:spider": "pnpm --filter @dashbox/tvbox build",
+    "lint": "pnpm -r lint",
+    "lint:admin": "pnpm --filter @dashbox/admin lint",
+    "lint:tvbox": "pnpm --filter @dashbox/tvbox lint",
+    "test": "pnpm -r test",
+    "test:admin": "pnpm --filter @dashbox/admin test",
+    "test:tvbox": "pnpm --filter @dashbox/tvbox test",
+    "typecheck": "pnpm -r typecheck",
+    "typecheck:admin": "pnpm --filter @dashbox/admin typecheck",
+    "typecheck:tvbox": "pnpm --filter @dashbox/tvbox typecheck"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-vue": "^10.0.0",
+    "esbuild": "^0.25.0",
+    "globals": "^15.0.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}

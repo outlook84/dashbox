@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dashbox"
+version = "0.1.0"
+description = "A small yt-dlp powered TVBox gateway."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "GPL-3.0-only"
+license-files = [
+  "LICENSE",
+  "THIRD_PARTY_NOTICES.md",
+]
+dependencies = [
+  "bcrypt>=4.1.0",
+  "biliass>=2.4.0",
+  # Keep curl-cffi explicit until a stable yt-dlp release allows >=0.15.0.
+  # Required to avoid CVE-2026-33752.
+  "curl-cffi>=0.15.0; implementation_name == 'cpython'",
+  "fastapi>=0.115.0",
+  "httpx[http2]>=0.28.0",
+  "uvicorn[standard]>=0.32.0",
+  "yt-dlp[default,curl-cffi]>=2026.5.16.233954.dev0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "pytest-xdist>=3.6.0",
+]
+
+[project.scripts]
+dashbox = "dashbox.server.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["dashbox*"]
+exclude = ["tvbox*", "node_modules*"]
+namespaces = true
+
+[tool.setuptools.package-data]
+"dashbox.assets" = [
+  "NOTICE.md",
+  "*.png",
+  "dashbox.*.js",
+]
+"dashbox.assets.admin" = [
+  "index.html",
+]
+"dashbox.assets.admin.assets" = [
+  "*",
+]
+dashbox = [
+  "kodi/plugin.video.dashbox/VERSION",
+  "kodi/plugin.video.dashbox/addon.xml",
+  "kodi/plugin.video.dashbox/default.py",
+  "kodi/plugin.video.dashbox/icon.png",
+  "kodi/plugin.video.dashbox/resources/settings.xml",
+  "kodi/plugin.video.dashbox/resources/language/resource.language.en_gb/*.po",
+  "kodi/plugin.video.dashbox/resources/language/resource.language.zh_cn/*.po",
+  "kodi/plugin.video.dashbox/resources/lib/*.py",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.uv]
+exclude-newer = "3 days"
+
+[tool.uv.exclude-newer-package]
+# yt-dlp often needs same-day updates when site extractors break.
+yt-dlp = "1 hour"

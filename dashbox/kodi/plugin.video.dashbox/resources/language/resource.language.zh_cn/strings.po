@@ -1,0 +1,248 @@
+# Kodi strings for Dashbox
+msgid ""
+msgstr ""
+"Project-Id-Version: Dashbox\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "#30000"
+msgid "Connection"
+msgstr "连接"
+
+msgctxt "#30001"
+msgid "Server URL"
+msgstr "服务器地址"
+
+msgctxt "#30002"
+msgid "Subscription ID"
+msgstr "订阅 ID"
+
+msgctxt "#30003"
+msgid "Access code"
+msgstr "访问码"
+
+msgctxt "#30004"
+msgid "Access token"
+msgstr "访问令牌"
+
+msgctxt "#30010"
+msgid "Settings"
+msgstr "设置"
+
+msgctxt "#30011"
+msgid "Re-authenticate"
+msgstr "重新认证"
+
+msgctxt "#30012"
+msgid "Dashbox server and subscription id are required"
+msgstr "需要配置 Dashbox 服务器地址和订阅 ID"
+
+msgctxt "#30013"
+msgid "Request failed"
+msgstr "请求失败"
+
+msgctxt "#30014"
+msgid "Dashbox search"
+msgstr "Dashbox 搜索"
+
+msgctxt "#30016"
+msgid "Authenticate"
+msgstr "认证"
+
+msgctxt "#30017"
+msgid "Enter access code"
+msgstr "输入访问码"
+
+msgctxt "#30018"
+msgid "Access code must be 4-12 digits"
+msgstr "访问码必须是 4-12 位数字"
+
+msgctxt "#30019"
+msgid "Authentication failed"
+msgstr "认证失败"
+
+msgctxt "#30100"
+msgid "Playback"
+msgstr "播放"
+
+msgctxt "#30101"
+msgid "Preferred video codecs"
+msgstr "视频编码偏好"
+
+msgctxt "#30102"
+msgid "Preferred audio codecs"
+msgstr "音频编码偏好"
+
+msgctxt "#30103"
+msgid "Max video height"
+msgstr "最大视频高度"
+
+msgctxt "#30104"
+msgid "Max video FPS"
+msgstr "最大视频帧率"
+
+msgctxt "#30105"
+msgid "Bilibili Danmaku font size"
+msgstr "Bilibili 弹幕字号"
+
+msgctxt "#30106"
+msgid "Enable Bilibili Danmaku"
+msgstr "启用 Bilibili 弹幕"
+
+msgctxt "#30107"
+msgid "Enable YouTube subtitles"
+msgstr "启用 YouTube 字幕"
+
+msgctxt "#30110"
+msgid "Unlimited"
+msgstr "不限制"
+
+msgctxt "#30111"
+msgid "480p"
+msgstr "480p"
+
+msgctxt "#30112"
+msgid "720p"
+msgstr "720p"
+
+msgctxt "#30113"
+msgid "1080p"
+msgstr "1080p"
+
+msgctxt "#30114"
+msgid "1440p"
+msgstr "1440p"
+
+msgctxt "#30115"
+msgid "2160p"
+msgstr "2160p"
+
+msgctxt "#30116"
+msgid "4320p"
+msgstr "4320p"
+
+msgctxt "#30117"
+msgid "24 fps"
+msgstr "24 fps"
+
+msgctxt "#30118"
+msgid "30 fps"
+msgstr "30 fps"
+
+msgctxt "#30119"
+msgid "60 fps"
+msgstr "60 fps"
+
+msgctxt "#30120"
+msgid "120 fps"
+msgstr "120 fps"
+
+msgctxt "#30121"
+msgid "Small"
+msgstr "小"
+
+msgctxt "#30122"
+msgid "Medium"
+msgstr "中"
+
+msgctxt "#30123"
+msgid "Default"
+msgstr "默认"
+
+msgctxt "#30124"
+msgid "Large"
+msgstr "大"
+
+msgctxt "#30125"
+msgid "Extra large"
+msgstr "特大"
+
+msgctxt "#30130"
+msgid "Disabled"
+msgstr "禁用"
+
+msgctxt "#30131"
+msgid "Video codec priority 1"
+msgstr "视频编码优先级 1"
+
+msgctxt "#30132"
+msgid "Video codec priority 2"
+msgstr "视频编码优先级 2"
+
+msgctxt "#30133"
+msgid "Video codec priority 3"
+msgstr "视频编码优先级 3"
+
+msgctxt "#30134"
+msgid "Video codec priority 4"
+msgstr "视频编码优先级 4"
+
+msgctxt "#30141"
+msgid "h264"
+msgstr "h264"
+
+msgctxt "#30142"
+msgid "hevc"
+msgstr "hevc"
+
+msgctxt "#30143"
+msgid "vp9"
+msgstr "vp9"
+
+msgctxt "#30144"
+msgid "av01"
+msgstr "av01"
+
+msgctxt "#30150"
+msgid "At least one codec must be enabled"
+msgstr "至少启用一个编码"
+
+msgctxt "#30151"
+msgid "Audio codec priority 1"
+msgstr "音频编码优先级 1"
+
+msgctxt "#30152"
+msgid "Audio codec priority 2"
+msgstr "音频编码优先级 2"
+
+msgctxt "#30153"
+msgid "Audio codec priority 3"
+msgstr "音频编码优先级 3"
+
+msgctxt "#30154"
+msgid "Audio codec priority 4"
+msgstr "音频编码优先级 4"
+
+msgctxt "#30155"
+msgid "Audio codec priority 5"
+msgstr "音频编码优先级 5"
+
+msgctxt "#30156"
+msgid "Audio codec priority 6"
+msgstr "音频编码优先级 6"
+
+msgctxt "#30161"
+msgid "aac"
+msgstr "aac"
+
+msgctxt "#30162"
+msgid "opus"
+msgstr "opus"
+
+msgctxt "#30163"
+msgid "eac3"
+msgstr "eac3"
+
+msgctxt "#30164"
+msgid "ac3"
+msgstr "ac3"
+
+msgctxt "#30165"
+msgid "flac"
+msgstr "flac"
+
+msgctxt "#30166"
+msgid "other"
+msgstr "other"

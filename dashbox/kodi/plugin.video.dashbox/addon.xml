@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon id="plugin.video.dashbox" name="Dashbox" version="0.0.0" provider-name="dashbox">
+  <requires>
+    <import addon="xbmc.python" version="3.0.0" />
+    <import addon="inputstream.adaptive" version="21.0.0" />
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="default.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">Dashbox client</summary>
+    <description lang="en">Kodi client for a Dashbox server.</description>
+    <assets>
+      <icon>icon.png</icon>
+    </assets>
+    <platform>all</platform>
+    <license>GPL-3.0-only</license>
+  </extension>
+</addon>

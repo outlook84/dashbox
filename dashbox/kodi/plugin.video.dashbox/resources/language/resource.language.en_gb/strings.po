@@ -1,0 +1,248 @@
+# Kodi strings for Dashbox
+msgid ""
+msgstr ""
+"Project-Id-Version: Dashbox\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "#30000"
+msgid "Connection"
+msgstr "Connection"
+
+msgctxt "#30001"
+msgid "Server URL"
+msgstr "Server URL"
+
+msgctxt "#30002"
+msgid "Subscription ID"
+msgstr "Subscription ID"
+
+msgctxt "#30003"
+msgid "Access code"
+msgstr "Access code"
+
+msgctxt "#30004"
+msgid "Access token"
+msgstr "Access token"
+
+msgctxt "#30010"
+msgid "Settings"
+msgstr "Settings"
+
+msgctxt "#30011"
+msgid "Re-authenticate"
+msgstr "Re-authenticate"
+
+msgctxt "#30012"
+msgid "Dashbox server and subscription id are required"
+msgstr "Dashbox server and subscription id are required"
+
+msgctxt "#30013"
+msgid "Request failed"
+msgstr "Request failed"
+
+msgctxt "#30014"
+msgid "Dashbox search"
+msgstr "Dashbox search"
+
+msgctxt "#30016"
+msgid "Authenticate"
+msgstr "Authenticate"
+
+msgctxt "#30017"
+msgid "Enter access code"
+msgstr "Enter access code"
+
+msgctxt "#30018"
+msgid "Access code must be 4-12 digits"
+msgstr "Access code must be 4-12 digits"
+
+msgctxt "#30019"
+msgid "Authentication failed"
+msgstr "Authentication failed"
+
+msgctxt "#30100"
+msgid "Playback"
+msgstr "Playback"
+
+msgctxt "#30101"
+msgid "Preferred video codecs"
+msgstr "Preferred video codecs"
+
+msgctxt "#30102"
+msgid "Preferred audio codecs"
+msgstr "Preferred audio codecs"
+
+msgctxt "#30103"
+msgid "Max video height"
+msgstr "Max video height"
+
+msgctxt "#30104"
+msgid "Max video FPS"
+msgstr "Max video FPS"
+
+msgctxt "#30105"
+msgid "Bilibili Danmaku font size"
+msgstr "Bilibili Danmaku font size"
+
+msgctxt "#30106"
+msgid "Enable Bilibili Danmaku"
+msgstr "Enable Bilibili Danmaku"
+
+msgctxt "#30107"
+msgid "Enable YouTube subtitles"
+msgstr "Enable YouTube subtitles"
+
+msgctxt "#30110"
+msgid "Unlimited"
+msgstr "Unlimited"
+
+msgctxt "#30111"
+msgid "480p"
+msgstr "480p"
+
+msgctxt "#30112"
+msgid "720p"
+msgstr "720p"
+
+msgctxt "#30113"
+msgid "1080p"
+msgstr "1080p"
+
+msgctxt "#30114"
+msgid "1440p"
+msgstr "1440p"
+
+msgctxt "#30115"
+msgid "2160p"
+msgstr "2160p"
+
+msgctxt "#30116"
+msgid "4320p"
+msgstr "4320p"
+
+msgctxt "#30117"
+msgid "24 fps"
+msgstr "24 fps"
+
+msgctxt "#30118"
+msgid "30 fps"
+msgstr "30 fps"
+
+msgctxt "#30119"
+msgid "60 fps"
+msgstr "60 fps"
+
+msgctxt "#30120"
+msgid "120 fps"
+msgstr "120 fps"
+
+msgctxt "#30121"
+msgid "Small"
+msgstr "Small"
+
+msgctxt "#30122"
+msgid "Medium"
+msgstr "Medium"
+
+msgctxt "#30123"
+msgid "Default"
+msgstr "Default"
+
+msgctxt "#30124"
+msgid "Large"
+msgstr "Large"
+
+msgctxt "#30125"
+msgid "Extra large"
+msgstr "Extra large"
+
+msgctxt "#30130"
+msgid "Disabled"
+msgstr "Disabled"
+
+msgctxt "#30131"
+msgid "Video codec priority 1"
+msgstr "Video codec priority 1"
+
+msgctxt "#30132"
+msgid "Video codec priority 2"
+msgstr "Video codec priority 2"
+
+msgctxt "#30133"
+msgid "Video codec priority 3"
+msgstr "Video codec priority 3"
+
+msgctxt "#30134"
+msgid "Video codec priority 4"
+msgstr "Video codec priority 4"
+
+msgctxt "#30141"
+msgid "h264"
+msgstr "h264"
+
+msgctxt "#30142"
+msgid "hevc"
+msgstr "hevc"
+
+msgctxt "#30143"
+msgid "vp9"
+msgstr "vp9"
+
+msgctxt "#30144"
+msgid "av01"
+msgstr "av01"
+
+msgctxt "#30150"
+msgid "At least one codec must be enabled"
+msgstr "At least one codec must be enabled"
+
+msgctxt "#30151"
+msgid "Audio codec priority 1"
+msgstr "Audio codec priority 1"
+
+msgctxt "#30152"
+msgid "Audio codec priority 2"
+msgstr "Audio codec priority 2"
+
+msgctxt "#30153"
+msgid "Audio codec priority 3"
+msgstr "Audio codec priority 3"
+
+msgctxt "#30154"
+msgid "Audio codec priority 4"
+msgstr "Audio codec priority 4"
+
+msgctxt "#30155"
+msgid "Audio codec priority 5"
+msgstr "Audio codec priority 5"
+
+msgctxt "#30156"
+msgid "Audio codec priority 6"
+msgstr "Audio codec priority 6"
+
+msgctxt "#30161"
+msgid "aac"
+msgstr "aac"
+
+msgctxt "#30162"
+msgid "opus"
+msgstr "opus"
+
+msgctxt "#30163"
+msgid "eac3"
+msgstr "eac3"
+
+msgctxt "#30164"
+msgid "ac3"
+msgstr "ac3"
+
+msgctxt "#30165"
+msgid "flac"
+msgstr "flac"
+
+msgctxt "#30166"
+msgid "other"
+msgstr "other"

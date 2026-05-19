@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <style>
+    rect.bg { fill: #ea580c; }
+    path, polygon, line { stroke: #fff; }
+    @media (prefers-color-scheme: dark) {
+      rect.bg { fill: #f59e0b; }
+      path, polygon, line { stroke: #18181b; }
+    }
+  </style>
+  <rect class="bg" width="64" height="64" rx="14" />
+  <path d="M18 20h28a5 5 0 0 1 5 5v18a5 5 0 0 1-5 5H18a5 5 0 0 1-5-5V25a5 5 0 0 1 5-5Z" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+  <polygon points="28 28 28 40 39 34" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+  <line x1="24" x2="40" y1="54" y2="54" stroke-width="4" stroke-linecap="round" />
+</svg>
