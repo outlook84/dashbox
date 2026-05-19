@@ -13,7 +13,7 @@ ENV UV_COMPILE_BYTECODE=1 \
 
 COPY --from=uv /uv /uvx /usr/local/bin/
 
-COPY pyproject.toml uv.lock README.md LICENSE THIRD_PARTY_NOTICES.md ./
+COPY pyproject.toml uv.lock README.md README.pypi.md LICENSE THIRD_PARTY_NOTICES.md ./
 COPY dashbox dashbox
 
 # The admin UI and TVBox spider are architecture-independent release assets.

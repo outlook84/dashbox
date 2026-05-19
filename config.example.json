@@ -25,18 +25,48 @@
         "playlist_limit": 100,
         "bilibili_list_limit": 100,
         "video_codec_preferences": [
-          { "codec": "h264", "enabled": true },
-          { "codec": "hevc", "enabled": true },
-          { "codec": "vp9", "enabled": true },
-          { "codec": "av01", "enabled": true }
+          {
+            "codec": "h264",
+            "enabled": true
+          },
+          {
+            "codec": "hevc",
+            "enabled": true
+          },
+          {
+            "codec": "vp9",
+            "enabled": true
+          },
+          {
+            "codec": "av01",
+            "enabled": true
+          }
         ],
         "audio_codec_preferences": [
-          { "codec": "aac", "enabled": true },
-          { "codec": "opus", "enabled": true },
-          { "codec": "eac3", "enabled": true },
-          { "codec": "ac3", "enabled": true },
-          { "codec": "flac", "enabled": true },
-          { "codec": "other", "enabled": true }
+          {
+            "codec": "aac",
+            "enabled": true
+          },
+          {
+            "codec": "opus",
+            "enabled": true
+          },
+          {
+            "codec": "eac3",
+            "enabled": true
+          },
+          {
+            "codec": "ac3",
+            "enabled": true
+          },
+          {
+            "codec": "flac",
+            "enabled": true
+          },
+          {
+            "codec": "other",
+            "enabled": true
+          }
         ],
         "max_video_height": 0,
         "max_video_fps": 0,
@@ -49,7 +79,7 @@
             "items": [
               {
                 "id": "example_bilibili_video",
-                "url": "https://www.bilibili.com/video/BV1xx411c7mD",
+                "url": "https://www.bilibili.com/video/BV1111111",
                 "title": "可选标题覆盖",
                 "pic": "",
                 "remarks": "可配置视频、合集或列表 URL"
@@ -62,7 +92,7 @@
             "items": [
               {
                 "id": "example_youtube_video",
-                "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                "url": "https://www.youtube.com/watch?v=11111111",
                 "pic": "",
                 "remarks": "示例"
               }
@@ -87,7 +117,7 @@
         "sources": [
           {
             "id": "pinned_video",
-            "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            "url": "https://www.youtube.com/watch?v=1111111",
             "title": "Pinned Video",
             "pic": "",
             "remarks": "Kodi 顶层可直接放 URL 项"
