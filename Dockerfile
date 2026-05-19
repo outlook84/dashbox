@@ -36,6 +36,9 @@ ENV DASHBOX_DATA_DIR=/data \
     DASHBOX_PORT=18990 \
     PYTHONUNBUFFERED=1
 
+RUN apk add --no-cache deno \
+    && deno --version
+
 RUN mkdir -p /data
 
 WORKDIR /app
