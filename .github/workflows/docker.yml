@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "23 */6 * * *"
-  push:
-    tags:
-      - "v*"
 
 permissions:
   contents: read
@@ -105,6 +102,28 @@ jobs:
           image="${REGISTRY}/${IMAGE_NAME}"
           echo "name=${image,,}" >> "$GITHUB_OUTPUT"
 
+      - name: Resolve package version
+        id: package
+        shell: bash
+        run: |
+          version="$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          if [ -z "$version" ]; then
+            echo "Unable to resolve package version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Validate release tag
+        if: steps.build_ref.outputs.type == 'tag'
+        shell: bash
+        run: |
+          expected_tag="v${{ steps.package.outputs.version }}"
+          actual_tag="${{ steps.build_ref.outputs.name }}"
+          if [ "$actual_tag" != "$expected_tag" ]; then
+            echo "Release tag $actual_tag does not match pyproject.toml version $expected_tag" >&2
+            exit 1
+          fi
+
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
@@ -148,21 +167,24 @@ jobs:
         shell: bash
         run: |
           image="${{ steps.image.outputs.name }}"
+          package_version="${{ steps.package.outputs.version }}"
           ytdlp_version="${{ steps.ytdlp.outputs.version }}"
           ref_name="${{ steps.build_ref.outputs.name }}"
           ref_type="${{ steps.build_ref.outputs.type }}"
           tags=()
 
           if [ "$ref_type" = "tag" ]; then
-            tags+=("${image}:${ref_name}")
-            tags+=("${image}:${ref_name}-yt-dlp-${ytdlp_version}")
+            tags+=("${image}:v${package_version}")
+            tags+=("${image}:v${package_version}-yt-dlp-${ytdlp_version}")
             tags+=("${image}:latest")
           elif [ "$ref_name" = "main" ]; then
             tags+=("${image}:main")
-            tags+=("${image}:main-yt-dlp-${ytdlp_version}")
+            tags+=("${image}:main-py-${package_version}")
+            tags+=("${image}:main-py-${package_version}-yt-dlp-${ytdlp_version}")
           else
             tags+=("${image}:${ref_name}")
-            tags+=("${image}:${ref_name}-yt-dlp-${ytdlp_version}")
+            tags+=("${image}:${ref_name}-py-${package_version}")
+            tags+=("${image}:${ref_name}-py-${package_version}-yt-dlp-${ytdlp_version}")
           fi
 
           printf "tags<<EOF\n" >> "$GITHUB_OUTPUT"
@@ -188,7 +210,17 @@ jobs:
         shell: bash
         run: |
           image="${{ steps.image.outputs.name }}"
-          tag="${{ steps.build_ref.outputs.name }}-yt-dlp-${{ steps.ytdlp.outputs.version }}"
+          package_version="${{ steps.package.outputs.version }}"
+          ytdlp_version="${{ steps.ytdlp.outputs.version }}"
+          ref_name="${{ steps.build_ref.outputs.name }}"
+          ref_type="${{ steps.build_ref.outputs.type }}"
+          if [ "$ref_type" = "tag" ]; then
+            tag="v${package_version}-yt-dlp-${ytdlp_version}"
+          elif [ "$ref_name" = "main" ]; then
+            tag="main-py-${package_version}-yt-dlp-${ytdlp_version}"
+          else
+            tag="${ref_name}-py-${package_version}-yt-dlp-${ytdlp_version}"
+          fi
           if docker buildx imagetools inspect "${image}:${tag}" >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
             echo "Image tag already exists: ${image}:${tag}"
