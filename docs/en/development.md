@@ -21,6 +21,13 @@ Dashbox is a mixed Python and TypeScript workspace.
 
 ## Setup
 
+Clone the repository:
+
+```bash
+git clone https://github.com/outlook84/dashbox.git
+cd dashbox
+```
+
 ```bash
 uv sync --extra dev
 pnpm install
@@ -29,7 +36,7 @@ pnpm install
 Run the backend locally:
 
 ```bash
-uv run dashbox --data-dir data --port 18990
+uv run dashbox --data-dir data --host 0.0.0.0 --port 18990 --public-base-url http://192.168.6.10:18990
 ```
 
 Run the admin UI dev server:
@@ -89,6 +96,6 @@ uv sync
 To allow pre-release yt-dlp fixes:
 
 ```bash
-uv lock --upgrade-package yt-dlp --prerelease allow
+uv lock --upgrade-package yt-dlp --prerelease=allow
 uv sync
 ```

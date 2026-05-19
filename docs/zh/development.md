@@ -19,6 +19,13 @@ Dashbox 是 Python 与 TypeScript 混合仓库。
 
 ## 初始化
 
+先克隆仓库：
+
+```bash
+git clone https://github.com/outlook84/dashbox.git
+cd dashbox
+```
+
 ```bash
 uv sync --extra dev
 pnpm install
@@ -27,7 +34,7 @@ pnpm install
 本地启动后端：
 
 ```bash
-uv run dashbox --data-dir data --port 18990
+uv run dashbox --data-dir data --host 0.0.0.0 --port 18990 --public-base-url http://192.168.6.10:18990
 ```
 
 启动管理界面开发服务：
@@ -86,6 +93,6 @@ uv sync
 允许 yt-dlp 预发布修复：
 
 ```bash
-uv lock --upgrade-package yt-dlp --prerelease allow
+uv lock --upgrade-package yt-dlp --prerelease=allow
 uv sync
 ```

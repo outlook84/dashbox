@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dashbox"
-version = "0.1.0.post2026051902"
+version = "0.1.0.post2026051903"
 description = "A small yt-dlp powered TVBox gateway."
 readme = "README.pypi.md"
 requires-python = ">=3.11"
@@ -33,14 +33,14 @@ classifiers = [
   "Topic :: Multimedia :: Video",
 ]
 dependencies = [
-  "bcrypt>=4.1.0",
-  "biliass>=2.4.0",
+  "bcrypt>=4.1.0,<5",
+  "biliass>=2.4.0,<3",
   # Keep curl-cffi explicit until a stable yt-dlp release allows >=0.15.0.
   # Required to avoid CVE-2026-33752.
-  "curl-cffi>=0.15.0; implementation_name == 'cpython'",
-  "fastapi>=0.115.0",
-  "httpx[http2]>=0.28.0",
-  "uvicorn[standard]>=0.32.0",
+  "curl-cffi>=0.15.0,<1; implementation_name == 'cpython'",
+  "fastapi>=0.115.0,<1",
+  "httpx[http2]>=0.28.0,<1",
+  "uvicorn[standard]>=0.32.0,<1",
   "yt-dlp[default,curl-cffi]>=2026.5.16.233954.dev0",
 ]
 
