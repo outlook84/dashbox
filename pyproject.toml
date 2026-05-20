@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dashbox"
-version = "0.1.1.post20260520"
+version = "0.1.1.post202605200323"
 description = "A small yt-dlp powered TVBox gateway."
 readme = "README.pypi.md"
 requires-python = ">=3.11"
