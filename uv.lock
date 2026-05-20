@@ -11,7 +11,7 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P3D"
 
 [options.exclude-newer-package]
-yt-dlp = { timestamp = "0001-01-01T00:00:00Z", span = "PT1H" }
+yt-dlp = { timestamp = "0001-01-01T00:00:00Z", span = "PT6H" }
 
 [[package]]
 name = "annotated-doc"

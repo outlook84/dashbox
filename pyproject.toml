@@ -95,4 +95,4 @@ exclude-newer = "3 days"
 
 [tool.uv.exclude-newer-package]
 # yt-dlp often needs same-day updates when site extractors break.
-yt-dlp = "1 hour"
+yt-dlp = "6 hours"
