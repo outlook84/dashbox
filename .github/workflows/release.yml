@@ -1,0 +1,152 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 */6 * * *"
+
+permissions:
+  contents: write
+  actions: write
+  pull-requests: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Release yt-dlp update
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          version: "0.11.8"
+
+      - name: Resolve current yt-dlp version
+        id: current
+        shell: bash
+        run: |
+          version="$(python -c 'import tomllib; data = tomllib.load(open("uv.lock", "rb")); print(next(package["version"] for package in data["package"] if package["name"] == "yt-dlp"))')"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Update yt-dlp lock
+        run: uv lock --upgrade-package yt-dlp --prerelease allow
+
+      - name: Resolve updated yt-dlp version
+        id: updated
+        shell: bash
+        run: |
+          version="$(python -c 'import tomllib; data = tomllib.load(open("uv.lock", "rb")); print(next(package["version"] for package in data["package"] if package["name"] == "yt-dlp"))')"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve release intent
+        id: intent
+        run: >
+          python scripts/resolve_ytdlp_release_intent.py
+          --current-ytdlp-version "${{ steps.current.outputs.version }}"
+          --updated-ytdlp-version "${{ steps.updated.outputs.version }}"
+
+      - name: Stop when release is current
+        if: steps.intent.outputs.should_release != 'true'
+        run: echo "yt-dlp ${{ steps.current.outputs.version }} is already released for ${{ steps.intent.outputs.package_base }}"
+
+      - name: Prepare release version
+        id: release
+        if: steps.intent.outputs.should_release == 'true'
+        run: uv run --with packaging python scripts/prepare_ytdlp_release.py
+
+      - name: Refresh lock metadata
+        if: steps.intent.outputs.should_release == 'true'
+        run: uv lock
+
+      - name: Resolve release pull request metadata
+        id: pr_meta
+        if: steps.intent.outputs.should_release == 'true'
+        shell: bash
+        run: |
+          branch="automation/ytdlp-${{ steps.release.outputs.ytdlp_version }}"
+          title="chore: release yt-dlp ${{ steps.release.outputs.ytdlp_version }} for ${{ steps.release.outputs.base_version }}"
+
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "base_sha=$(git rev-parse origin/main)" >> "$GITHUB_OUTPUT"
+          echo "title=$title" >> "$GITHUB_OUTPUT"
+
+      - name: Create release pull request
+        id: pr
+        if: steps.intent.outputs.should_release == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ github.token }}
+          base: main
+          branch: ${{ steps.pr_meta.outputs.branch }}
+          add-paths: |
+            pyproject.toml
+            uv.lock
+          commit-message: ${{ steps.pr_meta.outputs.title }}
+          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          title: ${{ steps.pr_meta.outputs.title }}
+          body: Automated yt-dlp refresh. CI must pass before this is merged and published.
+
+      - name: Run CI for release branch
+        if: steps.intent.outputs.should_release == 'true'
+        uses: step-security/workflow-dispatch@v1
+        with:
+          workflow: ci.yml
+          ref: ${{ steps.pr.outputs.pull-request-branch }}
+          token: ${{ github.token }}
+          wait-for-completion: true
+          wait-timeout-seconds: 3600
+
+      - name: Merge release pull request and tag
+        if: steps.intent.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          pr_number="${{ steps.pr.outputs.pull-request-number }}"
+          tag="${{ steps.release.outputs.tag }}"
+          title="${{ steps.pr_meta.outputs.title }}"
+
+          git fetch origin main:refs/remotes/origin/main --tags
+          current_base="$(git rev-parse origin/main)"
+          if [ "$current_base" != "${{ steps.pr_meta.outputs.base_sha }}" ]; then
+            echo "main moved from ${{ steps.pr_meta.outputs.base_sha }} to $current_base; rerun the workflow against the new base" >&2
+            exit 1
+          fi
+
+          gh pr merge "$pr_number" --squash --delete-branch --subject "$title" --body ""
+          git fetch origin main:refs/remotes/origin/main --tags
+          git checkout main
+          git reset --hard origin/main
+          git tag "$tag"
+          git push origin "$tag"
+
+      - name: Trigger PyPI release
+        if: steps.intent.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run pypi.yml --ref "${{ steps.release.outputs.tag }}"
+
+      - name: Trigger Docker release
+        if: steps.intent.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run docker.yml --ref "${{ steps.release.outputs.tag }}"

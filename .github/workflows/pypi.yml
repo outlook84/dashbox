@@ -94,7 +94,6 @@ jobs:
       - publish
     permissions:
       contents: write
-      actions: write
 
     steps:
       - name: Check out repository
@@ -147,10 +146,3 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ needs.build.outputs.tag }}
         run: gh release upload "$RELEASE_TAG" dist/* --clobber
-
-      - name: Trigger Docker release build
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ needs.build.outputs.tag }}
-        run: gh workflow run docker.yml --ref "$RELEASE_TAG"
