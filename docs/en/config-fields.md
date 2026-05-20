@@ -34,7 +34,7 @@ Dashbox currently persists these top-level fields in `config.json`:
 | `proxy_media_idle_ttl_seconds` | integer | `21600` | `1` to `604800` | How long idle DASH/inline media proxy sessions stay available, in seconds. Direct media URLs are not affected. |
 | `proxy_dash_media_url` | boolean | `false` | `true`, `false` | Proxy DASH media segment URLs through Dashbox when needed by clients. |
 | `user_agent` | string | empty | any string | Custom User-Agent used for upstream media and metadata requests. Empty uses yt-dlp's default. |
-| `cookies_from_browser.mode` | string | `disabled` | `disabled`, `firefox`, `chrome`, `edge`, `custom` | Selects a browser cookie source for yt-dlp. |
+| `cookies_from_browser.mode` | string | `disabled` | `disabled`, `firefox`, `firefox_data_dir`, `chrome`, `edge`, `custom` | Selects a browser cookie source for yt-dlp. `firefox_data_dir` reads from `<data-dir>/firefox-profile`. |
 | `cookies_from_browser.value` | string | empty | yt-dlp cookies-from-browser syntax | Custom cookie source. Only valid when cookie mode is `custom`. |
 
 ## Subscriptions

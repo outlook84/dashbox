@@ -42,7 +42,14 @@ def test_site_runtime_registry_builds_and_dispatches_registered_runtimes(monkeyp
 
     monkeypatch.setattr(site_runtime.registry, "runtime_factories", lambda: (FakeRuntime,))
 
-    runtime_registry = site_runtime.SiteRuntimeRegistry(Config(), object(), http_client_provider=lambda: object())
+    config = Config()
+    runtime_registry = site_runtime.SiteRuntimeRegistry(
+        config,
+        object(),
+        bilibili_list_limit=5,
+        bilibili_search_limit=3,
+        http_client_provider=lambda: object(),
+    )
 
     assert runtime_registry.runtime_for_url("fake:item").name == "fake"
     assert runtime_registry.runtime_for_url("https://example.test") is None
@@ -132,7 +139,8 @@ def test_segment_base_headers_include_registry_site_headers(monkeypatch) -> None
 
 def test_ytdlp_flat_playlist_enrichment_uses_registry_contract(monkeypatch) -> None:
     enriched: dict[str, object] = {}
-    client = ytdlp_client.YtdlpClient(Config(playlist_limit=7, ytdlp_concurrency=3))
+    config = Config(playlist_limit=7, ytdlp_concurrency=3)
+    client = ytdlp_client.YtdlpClient(config)
 
     monkeypatch.setattr(ytdlp_client.registry, "supports_flat_playlist_info", lambda info: True)
     monkeypatch.setattr(client, "download_webpage_with_impersonation", lambda url: "<html>playlist</html>")

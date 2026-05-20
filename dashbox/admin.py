@@ -28,6 +28,7 @@ from .config import (
     parse_config_data,
     write_config_file,
 )
+from .config.runtime import bind_runtime_config
 from .config.ids import normalize_config_ids
 from .utils.errors import exception_reason
 
@@ -90,6 +91,10 @@ class AdminSessionStore:
         expired = [session_id for session_id, session in self._sessions.items() if session.expires_at <= now]
         for session_id in expired:
             self._sessions.pop(session_id, None)
+
+
+def validate_runtime_dependent_config(config: Config, *, data_dir: Path | None) -> None:
+    bind_runtime_config(config, data_dir)
 
 
 class AdminAuthState:
@@ -299,7 +304,8 @@ def register_admin_routes(app: FastAPI, get_state: Callable[[], Any]) -> None:
                 raise ValueError("config must be an object")
             data = admin_editable_config_to_file_data(data, current.config, hash_access_code=False)
             normalize_result = normalize_config_ids(data)
-            parse_config_data(normalize_result.config, apply_env=False)
+            file_config = parse_config_data(normalize_result.config, apply_env=False)
+            validate_runtime_dependent_config(file_config, data_dir=current.data_dir)
         except ValueError as exc:
             return json_response({"ok": False, "error": str(exc)}, status_code=400)
         except Exception as exc:
@@ -318,7 +324,8 @@ def register_admin_routes(app: FastAPI, get_state: Callable[[], Any]) -> None:
                 raise ValueError("config must be an object")
             result = normalize_config_ids(data)
             file_data = admin_editable_config_to_file_data(result.config, current.config, hash_access_code=False)
-            parse_config_data(file_data, apply_env=False)
+            file_config = parse_config_data(file_data, apply_env=False)
+            validate_runtime_dependent_config(file_config, data_dir=current.data_dir)
         except ValueError as exc:
             return json_response({"ok": False, "error": str(exc)}, status_code=400)
         except Exception as exc:
@@ -348,8 +355,9 @@ def register_admin_routes(app: FastAPI, get_state: Callable[[], Any]) -> None:
             data = admin_editable_config_to_file_data(data, current.config)
             normalize_result = normalize_config_ids(data)
             file_config = parse_config_data(normalize_result.config, apply_env=False)
+            validate_runtime_dependent_config(file_config, data_dir=current.data_dir)
             config_data = config_to_json_data(file_config)
-            runtime_config = parse_config_data(config_data, apply_env=True)
+            runtime_file_config = parse_config_data(config_data, apply_env=True)
         except ValueError as exc:
             return json_response({"ok": False, "error": str(exc)}, status_code=400)
         except Exception as exc:
@@ -357,7 +365,7 @@ def register_admin_routes(app: FastAPI, get_state: Callable[[], Any]) -> None:
         async with config_save_lock:
             try:
                 write_config_file(current.config_path, config_data)
-                await current.reload_config(runtime_config)
+                await current.reload_config(runtime_file_config)
             except Exception as exc:
                 return json_response({"ok": False, "error": exception_reason(exc)}, status_code=500)
         return json_response({

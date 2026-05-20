@@ -9,8 +9,9 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from ..auth.cooldown_limiter import CooldownLimiter
-from ..config import Config, SearchProvider, Source
+from ..config import Config, SearchProvider, Source, YtdlpSearchPrefixMode
 from ..config import FolderItem, UrlItem
+from ..config.runtime import RuntimeConfigValues
 from .. import i18n
 from ..utils.errors import exception_reason
 from ..media import playback_result
@@ -70,16 +71,38 @@ class ClientService(MediaService):
         sources: Sequence[Source] | Any,
         dash_store: DashProxyStore | None = None,
         *,
+        search_default_provider: SearchProvider | None = None,
+        ytdlp_search_prefix: str | None = None,
+        ytdlp_search_prefix_mode: YtdlpSearchPrefixMode | None = None,
+        ytdlp_search_prefix_value: str | None = None,
+        ytdlp_search_limit: int | None = None,
+        search_bilibili_limit: int | None = None,
+        search_playlist_limit: int | None = None,
+        search_bilibili_list_limit: int | None = None,
+        runtime_config: RuntimeConfigValues | None = None,
         http_client_provider: Callable[[], Any] | None = None,
         playable_cache: PlayableInfoCache | None = None,
     ) -> None:
         super().__init__(
             config,
             dash_store,
+            ytdlp_search_limit=ytdlp_search_limit,
+            playlist_limit=search_playlist_limit,
+            bilibili_list_limit=search_bilibili_list_limit,
+            bilibili_search_limit=search_bilibili_limit,
+            runtime_config=runtime_config,
             http_client_provider=http_client_provider,
             playable_cache=playable_cache,
         )
         self.client_sub_id = sub_id
+        self.search_default_provider = config.default_search_provider if search_default_provider is None else search_default_provider
+        self.search_ytdlp_prefix = config.effective_ytdlp_search_prefix if ytdlp_search_prefix is None else ytdlp_search_prefix
+        self.search_ytdlp_prefix_mode = config.ytdlp_search_prefix.mode if ytdlp_search_prefix_mode is None else ytdlp_search_prefix_mode
+        self.search_ytdlp_prefix_value = config.ytdlp_search_prefix.value if ytdlp_search_prefix_value is None else ytdlp_search_prefix_value
+        self.search_ytdlp_limit = self.ytdlp_search_limit
+        self.search_bilibili_limit = self.bilibili_search_limit
+        self.search_playlist_limit = self.playlist_limit
+        self.search_bilibili_list_limit = self.bilibili_list_limit
         self.background_tasks: set[asyncio.Task[Any]] = set()
         self.config_tree = ConfigTree(sub_id, sources)
         self.directory_cache: DirectorySnapshotCache[DirectorySnapshot] = DirectorySnapshotCache()
@@ -141,7 +164,7 @@ class ClientService(MediaService):
         if key.startswith(("http://", "https://")):
             item = item_from_media_node(MediaNode(key, key, remarks="URL"))
             return ClientPage(items=(item,), total_items=1)
-        if self.config.default_search_provider == SearchProvider.BILIBILI:
+        if self.search_default_provider == SearchProvider.BILIBILI:
             nodes = await self.site_search_nodes(key)
             items = tuple(item_from_media_node(node) for node in nodes)
             return ClientPage(items=items, total_items=len(items))
@@ -270,7 +293,7 @@ class ClientService(MediaService):
         if key.startswith(("http://", "https://")):
             item = item_from_media_node(MediaNode(key, key, remarks="URL"))
             return ClientPage(items=(item,), total_items=1)
-        info = self.extract(search_urls.search_url_for_key(self.config, key), download=False, playlist=True, flat=True)
+        info = self.extract(search_urls.search_url_for_key(self.search_ytdlp_prefix, self.search_ytdlp_limit, key), download=False, playlist=True, flat=True)
         entries = info.get("entries") or []
         nodes = [
             media_mapper.node_from_info(entry, base_url, self.config.image_proxy_mode)
@@ -381,10 +404,10 @@ class ClientService(MediaService):
         return "\0".join((
             self.client_sub_id,
             normalized_url,
-            str(self.config.effective_playlist_limit),
-            str(self.config.effective_bilibili_list_limit),
+            str(self.search_playlist_limit),
+            str(self.search_bilibili_list_limit),
             self.config.effective_user_agent,
-            self.config.effective_cookies_from_browser,
+            self.ytdlp.browser_cookies.cookies_from_browser,
             self.ytdlp.browser_cookies.cache_token(),
             self.ytdlp.version(),
         ))

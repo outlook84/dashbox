@@ -737,6 +737,13 @@ def test_tvbox_locale_controls_backend_generated_copy() -> None:
     assert demo["list"][0]["vod_remarks"] == "Configure sources in config.json to replace this"
 
 
+def test_tvbox_service_rejects_subscription_not_registered_in_config() -> None:
+    subscription = tvbox_sub("standalone")
+
+    with pytest.raises(ValueError, match="TVBox subscription is required"):
+        TvboxService(Config(), subscription)
+
+
 def test_tvbox_routes_reject_unknown_or_non_tvbox_subscriptions() -> None:
     config = Config(subs=(tvbox_sub("main"), kodi_sub("kodi-main")))
 

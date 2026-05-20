@@ -6,7 +6,8 @@ from dashbox.media.ytdlp_client import YtdlpClient
 
 
 def make_runtime() -> SiteRuntimeRegistry:
-    return SiteRuntimeRegistry(Config(), YtdlpClient(Config()))
+    config = Config()
+    return SiteRuntimeRegistry(config, YtdlpClient(config))
 
 
 def test_playable_extract_url_skips_runtime_for_unknown_urls(monkeypatch) -> None:

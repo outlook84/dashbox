@@ -21,6 +21,7 @@ from ..config import (
     parse_max_video_height,
     parse_video_codec_preferences,
 )
+from ..config.runtime import RuntimeConfigValues
 from .. import i18n
 from ..core import client_selection
 from ..core.client_model import ClientAction, ClientInputStream, ClientItem, ClientPage, ClientPlay, item_from_media_node, with_item_overrides
@@ -43,22 +44,34 @@ class KodiService(ClientService):
         subscription: Subscription,
         dash_store: DashProxyStore | None = None,
         *,
+        runtime_config: RuntimeConfigValues | None = None,
         http_client_provider: Callable[[], Any] | None = None,
         playable_cache: PlayableInfoCache | None = None,
     ) -> None:
-        if subscription.type != SubscriptionType.KODI or subscription.kodi is None:
+        if subscription.type != SubscriptionType.KODI:
             raise ValueError("Kodi subscription is required")
-        effective_config = config.with_kodi_overrides(subscription.kodi)
+        resolved = next((sub for sub in config.subs if sub.id == subscription.id), None)
+        if resolved is None or resolved.kodi is None:
+            raise ValueError("Kodi subscription is required")
         super().__init__(
-            effective_config,
-            subscription.id,
-            (Source(KODI_ROOT_SOURCE_ID, "", subscription.kodi.sources),),
+            config,
+            resolved.id,
+            (Source(KODI_ROOT_SOURCE_ID, "", resolved.kodi.sources),),
             dash_store,
+            search_default_provider=resolved.kodi.effective_search_provider,
+            ytdlp_search_prefix=resolved.kodi.effective_ytdlp_search_prefix,
+            ytdlp_search_prefix_mode=resolved.kodi.ytdlp_search_prefix.mode,
+            ytdlp_search_prefix_value=resolved.kodi.ytdlp_search_prefix.value,
+            ytdlp_search_limit=resolved.kodi.effective_ytdlp_search_limit,
+            search_bilibili_limit=resolved.kodi.effective_bilibili_search_limit,
+            search_playlist_limit=resolved.kodi.effective_playlist_limit,
+            search_bilibili_list_limit=resolved.kodi.effective_bilibili_list_limit,
+            runtime_config=runtime_config,
             http_client_provider=http_client_provider,
             playable_cache=playable_cache,
         )
-        self.kodi_sub_id = subscription.id
-        self.kodi_config = subscription.kodi
+        self.kodi_sub_id = resolved.id
+        self.kodi_config = resolved.kodi
 
     def page_response(self, page: ClientPage, base_url: str = "") -> dict[str, Any]:
         return kodi.page_to_dict(page, self.config, base_url)
@@ -69,7 +82,7 @@ class KodiService(ClientService):
     async def root_page(self, base_url: str = "") -> ClientPage:
         items = (
             *tuple(await self.config_items_to_client_items(KODI_ROOT_SOURCE_ID, self.kodi_config.sources, base_url)),
-            ClientItem(id="", title=kodi_search_title(self.config), kind="search", is_folder=True),
+            ClientItem(id="", title=kodi_search_title(self), kind="search", is_folder=True),
         )
         return self.with_kodi_playable_items(ClientPage(items=items, total_items=len(items)))
 
@@ -345,17 +358,17 @@ def url_id(value: str) -> str:
     return value if value.startswith(("http://", "https://")) else ""
 
 
-def kodi_search_title(config: Config) -> str:
-    if config.default_search_provider == SearchProvider.BILIBILI:
+def kodi_search_title(service: ClientService) -> str:
+    if service.search_default_provider == SearchProvider.BILIBILI:
         return i18n.site_search_title(i18n.text("site.bilibili"), "")
-    if config.ytdlp_search_prefix.mode == YtdlpSearchPrefixMode.YOUTUBE:
+    if service.search_ytdlp_prefix_mode == YtdlpSearchPrefixMode.YOUTUBE:
         return i18n.site_search_title(i18n.text("site.youtube"), "")
-    if config.ytdlp_search_prefix.mode == YtdlpSearchPrefixMode.BILIBILI:
+    if service.search_ytdlp_prefix_mode == YtdlpSearchPrefixMode.BILIBILI:
         return i18n.site_search_title(i18n.text("site.bilibili"), "")
-    if config.ytdlp_search_prefix.mode == YtdlpSearchPrefixMode.SOUNDCLOUD:
+    if service.search_ytdlp_prefix_mode == YtdlpSearchPrefixMode.SOUNDCLOUD:
         return i18n.site_search_title("SoundCloud", "")
-    if config.ytdlp_search_prefix.value:
-        return i18n.site_search_title(config.ytdlp_search_prefix.value, "")
+    if service.search_ytdlp_prefix_mode == YtdlpSearchPrefixMode.CUSTOM and service.search_ytdlp_prefix_value:
+        return i18n.site_search_title(service.search_ytdlp_prefix_value, "")
     return i18n.site_search_title("yt-dlp", "")
 
 

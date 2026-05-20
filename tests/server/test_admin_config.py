@@ -211,6 +211,61 @@ def test_admin_config_validate_rejects_unsafe_source_url_scheme(tmp_path, monkey
     assert saved.json()["ok"] is False
 
 
+def test_admin_config_rejects_firefox_data_dir_without_runtime_data_dir(tmp_path, monkeypatch) -> None:
+    config_path = tmp_path / "config.json"
+    config_path.write_text('{"subs":[]}\n', encoding="utf-8")
+    write_admin_access_code_hash(config_path)
+    monkeypatch.setattr(admin, "verify_admin_access_code", lambda code, access_hash: True)
+    app = server.create_app(Config(), config_path=config_path)
+    draft = {
+        "subs": [],
+        "cookies_from_browser": {
+            "mode": "firefox_data_dir",
+        },
+    }
+
+    with no_lifespan_test_client(app) as client:
+        client.post("/admin/api/login", json={"access_code": "admin-code-1"})
+        validated = client.post("/admin/api/config/validate", json={"config": draft})
+        normalized = client.post("/admin/api/config/normalize", json={"config": draft})
+        saved = client.put("/admin/api/config", json={"config": draft})
+
+    expected_error = "cookies_from_browser mode firefox_data_dir requires --data-dir or DASHBOX_DATA_DIR"
+    assert validated.status_code == 400
+    assert validated.json() == {"ok": False, "error": expected_error}
+    assert normalized.status_code == 400
+    assert normalized.json() == {"ok": False, "error": expected_error}
+    assert saved.status_code == 400
+    assert saved.json() == {"ok": False, "error": expected_error}
+    assert json.loads(config_path.read_text(encoding="utf-8")) == {"subs": []}
+
+
+def test_admin_config_accepts_firefox_data_dir_from_environment(tmp_path, monkeypatch) -> None:
+    config_path = tmp_path / "config.json"
+    config_path.write_text('{"subs":[]}\n', encoding="utf-8")
+    write_admin_access_code_hash(config_path)
+    monkeypatch.setattr(admin, "verify_admin_access_code", lambda code, access_hash: True)
+    monkeypatch.setenv("DASHBOX_DATA_DIR", str(tmp_path / "env-data"))
+    app = server.create_app(Config(), config_path=config_path)
+    draft = {
+        "subs": [],
+        "cookies_from_browser": {
+            "mode": "firefox_data_dir",
+        },
+    }
+
+    with no_lifespan_test_client(app) as client:
+        client.post("/admin/api/login", json={"access_code": "admin-code-1"})
+        validated = client.post("/admin/api/config/validate", json={"config": draft})
+        normalized = client.post("/admin/api/config/normalize", json={"config": draft})
+
+    assert validated.status_code == 200
+    assert validated.json() == {"ok": True}
+    assert normalized.status_code == 200
+    assert normalized.json()["config"]["cookies_from_browser"] == {"mode": "firefox_data_dir"}
+    assert not (tmp_path / "config.json.bak").exists()
+
+
 def test_admin_config_redacts_subscription_access_code_hash(tmp_path, monkeypatch) -> None:
     config = Config(subs=(
         Subscription(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from ..config import Config
 from ..media.ytdlp_client import YtdlpClient
@@ -42,14 +42,47 @@ class SiteRuntimeRegistry:
         config: Config,
         ytdlp: YtdlpClient,
         *,
+        bilibili_list_limit: int | None = None,
+        bilibili_search_limit: int | None = None,
         http_client_provider: Callable[[], Any] | None = None,
     ) -> None:
         self.url_runtimes: tuple[UrlSiteRuntime, ...] = tuple(
-            factory(config, ytdlp, http_client_provider=http_client_provider)
+            self._create_runtime(
+                factory,
+                config,
+                ytdlp,
+                bilibili_list_limit=bilibili_list_limit,
+                bilibili_search_limit=bilibili_search_limit,
+                http_client_provider=http_client_provider,
+            )
             for factory in registry.runtime_factories()
         )
         for runtime in self.url_runtimes:
             setattr(self, runtime.name, runtime)
+
+    @staticmethod
+    def _create_runtime(
+        factory: registry.RuntimeFactory,
+        config: Config,
+        ytdlp: YtdlpClient,
+        *,
+        bilibili_list_limit: int | None,
+        bilibili_search_limit: int | None,
+        http_client_provider: Callable[[], Any] | None,
+    ) -> UrlSiteRuntime:
+        if (
+            getattr(factory, "__module__", "") == "dashbox.sites.bilibili.runtime"
+            and getattr(factory, "__name__", "") == "BilibiliRuntime"
+        ):
+            bilibili_factory = cast(Any, factory)
+            return bilibili_factory(
+                config,
+                ytdlp,
+                bilibili_list_limit=bilibili_list_limit,
+                bilibili_search_limit=bilibili_search_limit,
+                http_client_provider=http_client_provider,
+            )
+        return factory(config, ytdlp, http_client_provider=http_client_provider)
 
     def runtime_for_url(self, url: str) -> UrlSiteRuntime | None:
         return next((runtime for runtime in self.url_runtimes if runtime.supports_url(url)), None)

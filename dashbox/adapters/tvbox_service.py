@@ -7,6 +7,7 @@ from typing import Any
 
 from .. import i18n
 from ..config import CodecPreference, Config, ImageProxyMode, Subscription, SubscriptionType, TvboxLocale, UrlItem, enabled_codec_order
+from ..config.runtime import RuntimeConfigValues
 from ..core import client_selection
 from ..core import image_policy
 from ..core.client_model import ClientItem, ClientPage, ClientPlay
@@ -28,22 +29,34 @@ class TvboxService(ClientService):
         subscription: Subscription,
         dash_store: DashProxyStore | None = None,
         *,
+        runtime_config: RuntimeConfigValues | None = None,
         http_client_provider: Callable[[], Any] | None = None,
         playable_cache: PlayableInfoCache | None = None,
     ) -> None:
-        if subscription.type != SubscriptionType.TVBOX or subscription.tvbox is None:
+        if subscription.type != SubscriptionType.TVBOX:
             raise ValueError("TVBox subscription is required")
-        effective_config = config.with_tvbox_overrides(subscription.tvbox)
+        resolved = next((sub for sub in config.subs if sub.id == subscription.id), None)
+        if resolved is None or resolved.tvbox is None:
+            raise ValueError("TVBox subscription is required")
         super().__init__(
-            effective_config,
-            subscription.id,
-            subscription.tvbox.sources,
+            config,
+            resolved.id,
+            resolved.tvbox.sources,
             dash_store,
+            search_default_provider=resolved.tvbox.effective_search_provider,
+            ytdlp_search_prefix=resolved.tvbox.effective_ytdlp_search_prefix,
+            ytdlp_search_prefix_mode=resolved.tvbox.ytdlp_search_prefix.mode,
+            ytdlp_search_prefix_value=resolved.tvbox.ytdlp_search_prefix.value,
+            ytdlp_search_limit=resolved.tvbox.effective_ytdlp_search_limit,
+            search_bilibili_limit=resolved.tvbox.effective_bilibili_search_limit,
+            search_playlist_limit=resolved.tvbox.effective_playlist_limit,
+            search_bilibili_list_limit=resolved.tvbox.effective_bilibili_list_limit,
+            runtime_config=runtime_config,
             http_client_provider=http_client_provider,
             playable_cache=playable_cache,
         )
-        self.tvbox_sub_id = subscription.id
-        self.tvbox_config = subscription.tvbox
+        self.tvbox_sub_id = resolved.id
+        self.tvbox_config = resolved.tvbox
 
     def home(self) -> dict[str, Any]:
         with i18n.use_locale(self.tvbox_config.locale):

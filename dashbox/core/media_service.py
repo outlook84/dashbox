@@ -8,6 +8,7 @@ from collections.abc import Callable
 from typing import Any
 
 from ..config import Config
+from ..config.runtime import RuntimeConfigValues, default_runtime_config
 from ..media import playback
 from ..media.dash_proxy import DashProxyStore
 from ..utils import text
@@ -31,10 +32,20 @@ class MediaService:
         config: Config,
         dash_store: DashProxyStore | None = None,
         *,
+        ytdlp_search_limit: int | None = None,
+        playlist_limit: int | None = None,
+        bilibili_list_limit: int | None = None,
+        bilibili_search_limit: int | None = None,
+        runtime_config: RuntimeConfigValues | None = None,
         http_client_provider: Callable[[], Any] | None = None,
         playable_cache: PlayableInfoCache | None = None,
     ) -> None:
         self.config = config
+        self.runtime_config = runtime_config or default_runtime_config(config)
+        self.ytdlp_search_limit = config.effective_ytdlp_search_limit if ytdlp_search_limit is None else ytdlp_search_limit
+        self.playlist_limit = config.effective_playlist_limit if playlist_limit is None else playlist_limit
+        self.bilibili_list_limit = config.effective_bilibili_list_limit if bilibili_list_limit is None else bilibili_list_limit
+        self.bilibili_search_limit = config.effective_bilibili_search_limit if bilibili_search_limit is None else bilibili_search_limit
         self._segment_probe_sem = asyncio.Semaphore(max(1, min(config.ytdlp_concurrency, 4)))
         self.segment_base_prober = SegmentBaseProber(
             http_client_provider,
@@ -43,12 +54,23 @@ class MediaService:
             upstream_timeout=config.upstream_timeout,
         )
         self.playback = PlaybackSelector(dash_store, self.segment_base_prober)
-        self.ytdlp = YtdlpClient(config)
+        self.ytdlp = YtdlpClient(
+            config,
+            self.runtime_config,
+            ytdlp_search_limit=self.ytdlp_search_limit,
+            playlist_limit=self.playlist_limit,
+        )
         self.playable_cache = playable_cache or PlayableInfoCache()
         self.flat_playlist_info_tasks: dict[str, asyncio.Task[dict[str, Any]]] = {}
         self.flat_playlist_info_lock = asyncio.Lock()
         self._blocking_sem = asyncio.Semaphore(max(1, config.ytdlp_concurrency))
-        self.site_runtime = SiteRuntimeRegistry(config, self.ytdlp, http_client_provider=http_client_provider)
+        self.site_runtime = SiteRuntimeRegistry(
+            config,
+            self.ytdlp,
+            bilibili_list_limit=self.bilibili_list_limit,
+            bilibili_search_limit=self.bilibili_search_limit,
+            http_client_provider=http_client_provider,
+        )
         self.display_runtime = DisplayMetadataRuntime(
             config,
             download_impersonated=self.download_webpage_with_ytdlp_impersonation_async,
@@ -128,7 +150,7 @@ class MediaService:
         return "\0".join((
             raw_id,
             self.config.effective_user_agent,
-            self.config.effective_cookies_from_browser,
+            self.ytdlp.browser_cookies.cookies_from_browser,
             self.ytdlp.browser_cookies.cache_token(),
             self.ytdlp.version(),
         ))
@@ -159,7 +181,7 @@ class MediaService:
             if require_playable and not playback.has_playable_media(info):
                 raise ValueError("yt-dlp returned no playable media formats")
         except Exception as exc:
-            if not self.config.effective_cookies_from_browser:
+            if not self.ytdlp.browser_cookies.cookies_from_browser:
                 raise
             logger.debug("yt-dlp extract failed with browser cookies, retrying without cookies url=%s error=%s", url, exc)
             info = self.extract_once(
@@ -272,7 +294,7 @@ class MediaService:
             site_api,
             url,
             download_webpage=self.download_webpage_with_ytdlp_impersonation,
-            limit=self.config.effective_playlist_limit,
+            limit=self.playlist_limit,
             concurrency=self.site_api_concurrency(url),
         )
 
@@ -350,7 +372,7 @@ class MediaService:
             effective_extract_url,
             flat_playlist_items,
             self.config.effective_user_agent,
-            self.config.effective_cookies_from_browser,
+            self.ytdlp.browser_cookies.cookies_from_browser,
             self.ytdlp.browser_cookies.cache_token(),
             self.ytdlp.version(),
         ))

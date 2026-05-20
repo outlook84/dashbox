@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import logging
 import shutil
@@ -10,6 +10,7 @@ from typing import Any
 import yt_dlp
 
 from ..config import Config
+from ..config.runtime import RuntimeConfigValues, default_runtime_config
 from ..config.validation import parse_cookies_from_browser
 from ..utils.errors import exception_reason
 from ..sites import registry
@@ -22,11 +23,21 @@ class YtdlpClient:
     _js_runtimes_cache: dict[str, dict[str, Any]] | None = None
     _js_runtimes_lock = threading.Lock()
 
-    def __init__(self, config: Config) -> None:
+    def __init__(
+        self,
+        config: Config,
+        runtime_config: RuntimeConfigValues | None = None,
+        *,
+        ytdlp_search_limit: int | None = None,
+        playlist_limit: int | None = None,
+    ) -> None:
         self.config = config
+        self.runtime_config = runtime_config or default_runtime_config(config)
+        self.ytdlp_search_limit = config.effective_ytdlp_search_limit if ytdlp_search_limit is None else ytdlp_search_limit
+        self.playlist_limit = config.effective_playlist_limit if playlist_limit is None else playlist_limit
         self.yt_dlp = yt_dlp
         self.js_runtimes = self.detect_js_runtimes()
-        self.browser_cookies = BrowserCookieProvider(self, config.effective_cookies_from_browser)
+        self.browser_cookies = BrowserCookieProvider(self)
 
     def version(self) -> str:
         return ytdlp_version(self.yt_dlp)
@@ -134,9 +145,9 @@ class YtdlpClient:
         opts = self.opts_for_url(url, **opts, use_cookies=use_cookies)
         if flat:
             opts["extract_flat"] = "in_playlist"
-            if is_search_extract_url and self.config.effective_ytdlp_search_limit > 0:
-                opts["playlist_items"] = f"1-{self.config.effective_ytdlp_search_limit}"
-            elif not is_search_extract_url and self.config.effective_playlist_limit > 0:
+            if is_search_extract_url and self.ytdlp_search_limit > 0:
+                opts["playlist_items"] = f"1-{self.ytdlp_search_limit}"
+            elif not is_search_extract_url and self.playlist_limit > 0:
                 opts["playlist_items"] = flat_playlist_items
         started_at = time.monotonic()
         logger.debug("yt-dlp extract start url=%s playlist=%s flat=%s", url, playlist, flat)
@@ -159,7 +170,7 @@ class YtdlpClient:
         return info
 
     def flat_playlist_items(self, _url: str) -> str:
-        limit = self.config.effective_playlist_limit
+        limit = self.playlist_limit
         return f"1-{limit}"
 
     def enrich_flat_playlist_info(self, info: dict[str, Any]) -> None:
@@ -178,7 +189,7 @@ class YtdlpClient:
             webpage,
             url,
             download_webpage=self.download_webpage_with_impersonation,
-            limit=self.config.effective_playlist_limit,
+            limit=self.playlist_limit,
             concurrency=self.config.ytdlp_concurrency,
         )
 
@@ -208,13 +219,8 @@ def ytdlp_version(module: Any = yt_dlp) -> str:
 
 
 class BrowserCookieProvider:
-    def __init__(self, client: YtdlpClient, cookies_from_browser: str) -> None:
+    def __init__(self, client: YtdlpClient) -> None:
         self.client = client
-        self.cookies_from_browser = cookies_from_browser.strip()
-        self.browser_specification = (
-            parse_cookies_from_browser(self.cookies_from_browser) if self.cookies_from_browser else None
-        )
-        self.enabled = self.browser_specification is not None
         self.lock = threading.Lock()
         self.cookiejar: Any | None = None
         self.loaded = False
@@ -230,8 +236,20 @@ class BrowserCookieProvider:
         if cookiejar is not None:
             ydl.__dict__["cookiejar"] = cookiejar
 
+    @property
+    def cookies_from_browser(self) -> str:
+        return self.client.runtime_config.cookies_from_browser.strip()
+
+    @property
+    def display_source(self) -> str:
+        return self.client.runtime_config.cookies_from_browser_display.strip()
+
+    @property
+    def enabled(self) -> bool:
+        return bool(self.cookies_from_browser)
+
     def get_cookiejar(self) -> Any | None:
-        if not self.browser_specification:
+        if not self.enabled:
             return None
         with self.lock:
             if self.loaded:
@@ -240,7 +258,7 @@ class BrowserCookieProvider:
             return self.cookiejar
 
     def reload(self) -> None:
-        if not self.browser_specification:
+        if not self.enabled:
             return
         with self.lock:
             self.reload_generation += 1
@@ -251,7 +269,7 @@ class BrowserCookieProvider:
             self.next_load_action = "reloaded"
 
     def auto_reload(self) -> bool:
-        if not self.browser_specification:
+        if not self.enabled:
             return False
         with self.lock:
             now = time.monotonic()
@@ -282,7 +300,7 @@ class BrowserCookieProvider:
         self.next_load_action = "loaded"
         try:
             opts = self.client.opts(use_cookies=False, quiet=True, no_warnings=True)
-            opts["cookiesfrombrowser"] = self.browser_specification
+            opts["cookiesfrombrowser"] = self.browser_specification()
             with self.client.yt_dlp.YoutubeDL(opts) as ydl:
                 self.cookiejar = ydl.cookiejar
             cookie_count = sum(1 for _cookie in self.cookiejar) if self.cookiejar is not None else 0
@@ -293,11 +311,16 @@ class BrowserCookieProvider:
             self.cookiejar = None
             self.last_error = str(exc)
 
+    def browser_specification(self) -> tuple[str, str | None, str | None, str | None]:
+        if self.cookies_from_browser == "firefox_data_dir":
+            raise ValueError("cookies_from_browser mode firefox_data_dir requires --data-dir or DASHBOX_DATA_DIR")
+        return parse_cookies_from_browser(self.cookies_from_browser)
+
     def status(self) -> dict[str, Any]:
         with self.lock:
             return {
                 "enabled": bool(self.cookies_from_browser),
-                "source": self.cookies_from_browser,
+                "source": self.display_source,
                 "loaded": self.loaded,
                 "loaded_at": self.loaded_at,
                 "cookie_count": sum(1 for _cookie in self.cookiejar) if self.cookiejar is not None else 0,

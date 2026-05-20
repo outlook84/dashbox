@@ -12,6 +12,7 @@ import dashbox.server.utils as server_utils
 from fastapi import HTTPException
 from fastapi.responses import Response
 from dashbox.config import Config
+from dashbox.config.runtime import FIREFOX_DATA_DIR_PROFILE_DIRNAME, resolve_runtime_browser_cookies
 from dashbox.core import image_policy, image_proxy
 from tests.helpers import no_lifespan_test_client
 
@@ -139,6 +140,25 @@ def test_data_dir_config_is_created_when_missing(tmp_path) -> None:
     server_cli.ensure_data_dir_config(str(config_path), str(data_dir))
 
     assert json.loads(config_path.read_text(encoding="utf-8")) == {"subs": []}
+
+
+def test_resolve_runtime_cookies_from_browser_uses_firefox_profile_under_data_dir(tmp_path) -> None:
+    data_dir = tmp_path / "data"
+    config = Config(cookies_from_browser={"mode": "firefox_data_dir"})
+
+    resolved = resolve_runtime_browser_cookies(config, data_dir)
+
+    assert resolved == (
+        f"firefox:{(data_dir / FIREFOX_DATA_DIR_PROFILE_DIRNAME).resolve()}",
+        "firefox:<data-dir>/firefox-profile",
+    )
+
+
+def test_resolve_runtime_cookies_from_browser_requires_data_dir() -> None:
+    config = Config(cookies_from_browser={"mode": "firefox_data_dir"})
+
+    with pytest.raises(ValueError, match="requires --data-dir or DASHBOX_DATA_DIR"):
+        resolve_runtime_browser_cookies(config, None)
 
 
 def test_public_base_url_cli_value_overrides_env(monkeypatch) -> None:

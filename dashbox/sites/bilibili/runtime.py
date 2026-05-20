@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import urllib.request
 from collections.abc import Callable
@@ -56,20 +56,24 @@ class BilibiliRuntime:
         config: Config,
         ytdlp: YtdlpClient,
         *,
+        bilibili_list_limit: int | None = None,
+        bilibili_search_limit: int | None = None,
         http_client_provider: Callable[[], Any] | None = None,
     ) -> None:
         self.cookies = BilibiliCookieProvider(ytdlp.browser_cookies)
+        list_limit = config.effective_bilibili_list_limit if bilibili_list_limit is None else bilibili_list_limit
+        search_limit = config.effective_bilibili_search_limit if bilibili_search_limit is None else bilibili_search_limit
         self.site = bilibili.BilibiliSite(
             config.effective_user_agent,
             config.upstream_timeout,
-            config.effective_bilibili_list_limit,
-            config.effective_bilibili_search_limit,
+            list_limit,
+            search_limit,
             self.cookies.cookie_header,
             self.cookies.reload,
             self.cookies.auto_reload,
             http_client_provider=http_client_provider,
         )
-        self.search_limit = config.effective_bilibili_search_limit
+        self.search_limit = search_limit
 
     def supports_url(self, url: str) -> bool:
         return bilibili.matches_url(url)

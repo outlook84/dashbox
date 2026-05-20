@@ -13,6 +13,7 @@ from ..adapters.kodi_service import KodiService
 from ..adapters.tvbox_service import TvboxService
 from ..auth.failure_limiter import FailureLimiter
 from ..config import Config, Subscription, SubscriptionType
+from ..config.runtime import bind_runtime_config
 from ..core.image_proxy import ImageCache, ImageFetchManager, ImagePrefetchIndex
 from ..core.media_service import MediaService
 from ..media.dash_proxy import DashProxyStore
@@ -48,11 +49,13 @@ class AppState:
 
     def configure(self, config: Config) -> None:
         self.config = config
+        self.runtime_config = bind_runtime_config(config, self.data_dir)
         self.dash_store.idle_ttl_seconds = config.proxy_media_idle_ttl_seconds
         self.inline_manifest_store.idle_ttl_seconds = config.proxy_media_idle_ttl_seconds
         self.service = MediaService(
             config,
             self.dash_store,
+            runtime_config=self.runtime_config,
             http_client_provider=self.http_client.client,
             playable_cache=self.playable_cache,
         )
@@ -62,6 +65,7 @@ class AppState:
                 config,
                 sub,
                 self.dash_store,
+                runtime_config=self.runtime_config,
                 http_client_provider=self.http_client.client,
                 playable_cache=self.playable_cache,
             )
@@ -73,6 +77,7 @@ class AppState:
                 config,
                 sub,
                 self.dash_store,
+                runtime_config=self.runtime_config,
                 http_client_provider=self.http_client.client,
                 playable_cache=self.playable_cache,
             )
@@ -142,7 +147,6 @@ class SubscriptionRegistry:
         if sub.type != SubscriptionType.KODI or sub.kodi is None:
             raise HTTPException(status_code=404, detail="subscription not found")
         return sub
-
 
 class AppHttpClient:
     def __init__(self, config: Config) -> None:

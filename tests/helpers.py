@@ -144,6 +144,7 @@ def make_tvbox_service(
             **(tvbox_overrides or {}),
         ),
     )
+    config = replace(config, subs=(subscription,))
     return TvboxService(config, subscription, **kwargs)
 
 

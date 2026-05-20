@@ -33,6 +33,7 @@ const labelKeys: Record<LabelGroup, Record<string, MessageKey>> = {
   cookiesMode: {
     disabled: "labels.cookiesMode.disabled",
     firefox: "labels.cookiesMode.firefox",
+    firefox_data_dir: "labels.cookiesMode.firefox_data_dir",
     chrome: "labels.cookiesMode.chrome",
     edge: "labels.cookiesMode.edge",
     brave: "labels.cookiesMode.brave",

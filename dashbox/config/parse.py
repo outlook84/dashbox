@@ -345,9 +345,10 @@ def _validated_browser_cookies_config(value: BrowserCookiesConfig) -> BrowserCoo
     if custom_value:
         raise ValueError("cookies_from_browser value is only supported in custom mode")
     out = BrowserCookiesConfig(mode=mode)
-    effective = out.to_ytdlp_value()
-    if effective:
-        parse_cookies_from_browser(effective)
+    if mode != BrowserCookiesMode.FIREFOX_DATA_DIR:
+        effective = out.to_ytdlp_value()
+        if effective:
+            parse_cookies_from_browser(effective)
     return out
 
 

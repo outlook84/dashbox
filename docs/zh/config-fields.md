@@ -34,7 +34,7 @@ Dashbox 当前会写入 `config.json` 的顶层字段包括：
 | `proxy_media_idle_ttl_seconds` | integer | `21600` | `1` 到 `604800` | DASH/内联媒体代理会话空闲后保留的秒数。普通直连媒体 URL 不受影响。 |
 | `proxy_dash_media_url` | boolean | `false` | `true`, `false` | 在客户端需要时，经由 Dashbox 代理 DASH 媒体分片 URL。 |
 | `user_agent` | string | 空 | 任意字符串 | 上游媒体和元数据请求使用的自定义 User-Agent。留空使用 yt-dlp 默认值。 |
-| `cookies_from_browser.mode` | string | `disabled` | `disabled`, `firefox`, `chrome`, `edge`, `custom` | 选择 yt-dlp 使用的浏览器 Cookies 来源。 |
+| `cookies_from_browser.mode` | string | `disabled` | `disabled`, `firefox`, `firefox_data_dir`, `chrome`, `edge`, `custom` | 选择 yt-dlp 使用的浏览器 Cookies 来源。`firefox_data_dir` 会读取 `<data-dir>/firefox-profile`。 |
 | `cookies_from_browser.value` | string | 空 | yt-dlp cookies-from-browser 语法 | 自定义 Cookies 来源。仅在模式为 `custom` 时有效。 |
 
 ## 订阅

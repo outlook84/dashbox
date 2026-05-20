@@ -102,6 +102,7 @@ class YtdlpSearchPrefixMode(StrEnum):
 class BrowserCookiesMode(StrEnum):
     DISABLED = "disabled"
     FIREFOX = "firefox"
+    FIREFOX_DATA_DIR = "firefox_data_dir"
     CHROME = "chrome"
     EDGE = "edge"
     CUSTOM = "custom"
@@ -257,6 +258,31 @@ class TvboxSubscriptionConfig:
         )
         object.__setattr__(self, "vod_style", parse_vod_style(self.vod_style, "tvbox.vod_style"))
 
+    @property
+    def effective_search_provider(self) -> SearchProvider:
+        return self.search_provider or SearchProvider.YTDLP
+
+    @property
+    def effective_ytdlp_search_prefix(self) -> str:
+        prefix = self.ytdlp_search_prefix or YtdlpSearchPrefixConfig()
+        return prefix.to_ytdlp_value()
+
+    @property
+    def effective_ytdlp_search_limit(self) -> int:
+        return DEFAULT_YTDLP_SEARCH_LIMIT if self.ytdlp_search_limit == 0 else int(self.ytdlp_search_limit or DEFAULT_YTDLP_SEARCH_LIMIT)
+
+    @property
+    def effective_bilibili_search_limit(self) -> int:
+        return DEFAULT_BILIBILI_SEARCH_LIMIT if self.bilibili_search_limit == 0 else int(self.bilibili_search_limit or DEFAULT_BILIBILI_SEARCH_LIMIT)
+
+    @property
+    def effective_playlist_limit(self) -> int:
+        return DEFAULT_PLAYLIST_LIMIT if self.playlist_limit == 0 else int(self.playlist_limit or DEFAULT_PLAYLIST_LIMIT)
+
+    @property
+    def effective_bilibili_list_limit(self) -> int:
+        return DEFAULT_BILIBILI_LIST_LIMIT if self.bilibili_list_limit == 0 else int(self.bilibili_list_limit or DEFAULT_BILIBILI_LIST_LIMIT)
+
 
 @dataclass(frozen=True)
 class KodiSubscriptionConfig:
@@ -298,6 +324,31 @@ class KodiSubscriptionConfig:
                 "bilibili_list_limit",
                 parse_non_negative_int(self.bilibili_list_limit, "kodi.bilibili_list_limit", maximum=MAX_LIST_LIMIT),
             )
+
+    @property
+    def effective_search_provider(self) -> SearchProvider:
+        return self.search_provider or SearchProvider.YTDLP
+
+    @property
+    def effective_ytdlp_search_prefix(self) -> str:
+        prefix = self.ytdlp_search_prefix or YtdlpSearchPrefixConfig()
+        return prefix.to_ytdlp_value()
+
+    @property
+    def effective_ytdlp_search_limit(self) -> int:
+        return DEFAULT_YTDLP_SEARCH_LIMIT if self.ytdlp_search_limit == 0 else int(self.ytdlp_search_limit or DEFAULT_YTDLP_SEARCH_LIMIT)
+
+    @property
+    def effective_bilibili_search_limit(self) -> int:
+        return DEFAULT_BILIBILI_SEARCH_LIMIT if self.bilibili_search_limit == 0 else int(self.bilibili_search_limit or DEFAULT_BILIBILI_SEARCH_LIMIT)
+
+    @property
+    def effective_playlist_limit(self) -> int:
+        return DEFAULT_PLAYLIST_LIMIT if self.playlist_limit == 0 else int(self.playlist_limit or DEFAULT_PLAYLIST_LIMIT)
+
+    @property
+    def effective_bilibili_list_limit(self) -> int:
+        return DEFAULT_BILIBILI_LIST_LIMIT if self.bilibili_list_limit == 0 else int(self.bilibili_list_limit or DEFAULT_BILIBILI_LIST_LIMIT)
 
 
 @dataclass(frozen=True)
@@ -379,80 +430,72 @@ class Config:
             parse_positive_int(self.ytdlp_concurrency, "ytdlp_concurrency", maximum=MAX_YTDLP_CONCURRENCY),
         )
         object.__setattr__(self, "cookies_from_browser", parse_browser_cookies_config(self.cookies_from_browser))
+        object.__setattr__(self, "subs", tuple(self._resolve_subscription(sub) for sub in self.subs))
 
     @property
     def effective_user_agent(self) -> str:
         return self.user_agent or DEFAULT_USER_AGENT
 
     @property
-    def effective_playlist_limit(self) -> int:
-        if self.playlist_limit == 0:
-            return DEFAULT_PLAYLIST_LIMIT
-        return self.playlist_limit
+    def configured_cookies_from_browser(self) -> str:
+        return self.cookies_from_browser.to_ytdlp_value()
 
     @property
-    def effective_ytdlp_search_limit(self) -> int:
-        if self.ytdlp_search_limit == 0:
-            return DEFAULT_YTDLP_SEARCH_LIMIT
-        return self.ytdlp_search_limit
-
-    @property
-    def effective_bilibili_search_limit(self) -> int:
-        if self.bilibili_search_limit == 0:
-            return DEFAULT_BILIBILI_SEARCH_LIMIT
-        return self.bilibili_search_limit
-
-    @property
-    def effective_bilibili_list_limit(self) -> int:
-        if self.bilibili_list_limit == 0:
-            return DEFAULT_BILIBILI_LIST_LIMIT
-        return self.bilibili_list_limit
+    def effective_search_provider(self) -> SearchProvider:
+        return self.default_search_provider
 
     @property
     def effective_ytdlp_search_prefix(self) -> str:
         return self.ytdlp_search_prefix.to_ytdlp_value()
 
     @property
-    def effective_cookies_from_browser(self) -> str:
-        return self.cookies_from_browser.to_ytdlp_value()
+    def effective_ytdlp_search_limit(self) -> int:
+        return DEFAULT_YTDLP_SEARCH_LIMIT if self.ytdlp_search_limit == 0 else self.ytdlp_search_limit
 
-    def with_tvbox_overrides(self, tvbox: TvboxSubscriptionConfig) -> "Config":
-        values: dict[str, Any] = {}
-        if tvbox.search_provider is not None:
-            values["default_search_provider"] = tvbox.search_provider
-        if tvbox.ytdlp_search_prefix is not None:
-            values["ytdlp_search_prefix"] = tvbox.ytdlp_search_prefix
-        for field in (
-            "ytdlp_search_limit",
-            "bilibili_search_limit",
-            "playlist_limit",
-            "bilibili_list_limit",
-        ):
-            value = getattr(tvbox, field)
-            if value is not None:
-                values[field] = value
-        if not values:
-            return self
-        return replace(self, **values)
+    @property
+    def effective_bilibili_search_limit(self) -> int:
+        return DEFAULT_BILIBILI_SEARCH_LIMIT if self.bilibili_search_limit == 0 else self.bilibili_search_limit
 
-    def with_kodi_overrides(self, kodi: KodiSubscriptionConfig) -> "Config":
+    @property
+    def effective_playlist_limit(self) -> int:
+        return DEFAULT_PLAYLIST_LIMIT if self.playlist_limit == 0 else self.playlist_limit
+
+    @property
+    def effective_bilibili_list_limit(self) -> int:
+        return DEFAULT_BILIBILI_LIST_LIMIT if self.bilibili_list_limit == 0 else self.bilibili_list_limit
+
+    def _resolve_subscription(self, sub: Subscription) -> Subscription:
+        if sub.type == SubscriptionType.TVBOX and sub.tvbox is not None:
+            return replace(sub, tvbox=self._resolve_tvbox_subscription(sub.tvbox))
+        if sub.type == SubscriptionType.KODI and sub.kodi is not None:
+            return replace(sub, kodi=self._resolve_kodi_subscription(sub.kodi))
+        return sub
+
+    def _resolve_tvbox_subscription(self, tvbox: TvboxSubscriptionConfig) -> TvboxSubscriptionConfig:
         values: dict[str, Any] = {}
-        if kodi.search_provider is not None:
-            values["default_search_provider"] = kodi.search_provider
-        if kodi.ytdlp_search_prefix is not None:
-            values["ytdlp_search_prefix"] = kodi.ytdlp_search_prefix
-        for field in (
-            "ytdlp_search_limit",
-            "bilibili_search_limit",
-            "playlist_limit",
-            "bilibili_list_limit",
-        ):
-            value = getattr(kodi, field)
-            if value is not None:
-                values[field] = value
+        if tvbox.search_provider is None:
+            values["search_provider"] = self.default_search_provider
+        if tvbox.ytdlp_search_prefix is None:
+            values["ytdlp_search_prefix"] = self.ytdlp_search_prefix
+        for field in ("ytdlp_search_limit", "bilibili_search_limit", "playlist_limit", "bilibili_list_limit"):
+            if getattr(tvbox, field) is None:
+                values[field] = getattr(self, field)
         if not values:
-            return self
-        return replace(self, **values)
+            return tvbox
+        return replace(tvbox, **values)
+
+    def _resolve_kodi_subscription(self, kodi: KodiSubscriptionConfig) -> KodiSubscriptionConfig:
+        values: dict[str, Any] = {}
+        if kodi.search_provider is None:
+            values["search_provider"] = self.default_search_provider
+        if kodi.ytdlp_search_prefix is None:
+            values["ytdlp_search_prefix"] = self.ytdlp_search_prefix
+        for field in ("ytdlp_search_limit", "bilibili_search_limit", "playlist_limit", "bilibili_list_limit"):
+            if getattr(kodi, field) is None:
+                values[field] = getattr(self, field)
+        if not values:
+            return kodi
+        return replace(kodi, **values)
 
 
 

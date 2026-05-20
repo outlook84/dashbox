@@ -13,3 +13,4 @@ data/
 kodi/plugin.video.dashbox*.zip
 dashbox/assets/admin/
 .venv
+firefox-profile/

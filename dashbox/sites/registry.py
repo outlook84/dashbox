@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any, Protocol
+
+if TYPE_CHECKING:
+    from ..config import Config
+    from ..media.ytdlp_client import YtdlpClient
 
 from . import bilibili, generic, pornhub, spankbang, twitch, xvideos, youtube
 
@@ -14,6 +18,16 @@ SITE_ADAPTERS = (
     pornhub,
     twitch,
 )
+
+
+class RuntimeFactory(Protocol):
+    def __call__(
+        self,
+        config: Config,
+        ytdlp: YtdlpClient,
+        *,
+        http_client_provider: Callable[[], Any] | None = None,
+    ) -> Any: ...
 
 
 def resolve(url: str) -> Any:
@@ -91,7 +105,7 @@ def enrich_flat_playlist_info(info: dict[str, Any], webpage: str, url: str, **kw
     return False
 
 
-def runtime_factories() -> tuple[Callable[..., Any], ...]:
+def runtime_factories() -> tuple[RuntimeFactory, ...]:
     from .bilibili.runtime import BilibiliRuntime
 
     return (BilibiliRuntime,)

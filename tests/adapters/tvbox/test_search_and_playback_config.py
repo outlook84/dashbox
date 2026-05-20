@@ -9,9 +9,11 @@ from dashbox.config import (
     Config,
     ImageProxyMode,
     SearchProvider,
+    Subscription,
     TvboxSubscriptionConfig,
     YtdlpSearchPrefixMode,
 )
+from dashbox.config.runtime import bind_runtime_config
 from dashbox.core import search_urls
 from dashbox.models import MediaNode
 from tests.helpers import make_tvbox_service as MediaService
@@ -19,44 +21,59 @@ from tests.helpers import make_tvbox_service as MediaService
 
 def test_search_url_for_key_uses_configured_prefix_and_limit() -> None:
     config = Config(
-        ytdlp_search_prefix={"mode": "soundcloud"},
-        ytdlp_search_limit=12,
-    )
-
-    assert search_urls.search_url_for_key(config, "test") == "scsearch12:test"
-    assert config.ytdlp_search_prefix.mode is YtdlpSearchPrefixMode.SOUNDCLOUD
-def test_tvbox_subscription_search_settings_override_top_level_defaults() -> None:
-    config = Config(
         default_search_provider="ytdlp",
         ytdlp_search_prefix={"mode": "youtube"},
         ytdlp_search_limit=30,
         bilibili_search_limit=30,
         playlist_limit=100,
         bilibili_list_limit=100,
-    )
-    tvbox_config = TvboxSubscriptionConfig(
-        search_provider="bilibili",
-        ytdlp_search_prefix={"mode": "soundcloud"},
-        ytdlp_search_limit=12,
-        bilibili_search_limit=13,
-        playlist_limit=14,
-        bilibili_list_limit=15,
+        subs=(
+            Subscription(
+                id="main",
+                type="tvbox",
+                tvbox=TvboxSubscriptionConfig(
+                    site_key="dashbox",
+                    search_provider="bilibili",
+                    ytdlp_search_prefix={"mode": "soundcloud"},
+                    ytdlp_search_limit=12,
+                    bilibili_search_limit=13,
+                    playlist_limit=14,
+                    bilibili_list_limit=15,
+                    sources=(),
+                ),
+            ),
+        ),
     )
 
-    effective = config.with_tvbox_overrides(tvbox_config)
+    tvbox_config = config.subs[0].tvbox
+    assert tvbox_config.search_provider is SearchProvider.BILIBILI
+    assert search_urls.search_url_for_key(config.effective_ytdlp_search_prefix, config.effective_ytdlp_search_limit, "test") == "ytsearch30:test"
+    assert tvbox_config.effective_ytdlp_search_prefix == "scsearch"
+    assert tvbox_config.effective_ytdlp_search_limit == 12
+    assert tvbox_config.effective_bilibili_search_limit == 13
+    assert tvbox_config.effective_playlist_limit == 14
+    assert tvbox_config.effective_bilibili_list_limit == 15
 
-    assert effective.default_search_provider is SearchProvider.BILIBILI
-    assert search_urls.search_url_for_key(effective, "test") == "scsearch12:test"
-    assert effective.effective_bilibili_search_limit == 13
-    assert effective.effective_playlist_limit == 14
-    assert effective.effective_bilibili_list_limit == 15
+
+def test_tvbox_subscription_overrides_do_not_fork_runtime_config(tmp_path) -> None:
+    config = Config(cookies_from_browser={"mode": "firefox_data_dir"})
+    runtime_config = bind_runtime_config(config, tmp_path)
+
+    service = MediaService(config, tvbox_overrides={"ytdlp_search_limit": 4}, runtime_config=runtime_config)
+
+    assert service.tvbox_config.ytdlp_search_limit == 4
+    assert service.runtime_config.data_dir == tmp_path.resolve()
+    assert service.ytdlp.runtime_config is service.runtime_config
 def test_cookies_from_browser_uses_mode_or_custom_value() -> None:
     simple = Config(cookies_from_browser={"mode": "firefox"})
+    data_dir = Config(cookies_from_browser={"mode": "firefox_data_dir"})
     custom = Config(cookies_from_browser={"mode": "custom", "value": "chrome:Profile 1"})
 
     assert simple.cookies_from_browser == BrowserCookiesConfig(mode=BrowserCookiesMode.FIREFOX)
-    assert simple.effective_cookies_from_browser == "firefox"
-    assert custom.effective_cookies_from_browser == "chrome:Profile 1"
+    assert simple.configured_cookies_from_browser == "firefox"
+    assert data_dir.cookies_from_browser == BrowserCookiesConfig(mode=BrowserCookiesMode.FIREFOX_DATA_DIR)
+    assert data_dir.configured_cookies_from_browser == "firefox_data_dir"
+    assert custom.configured_cookies_from_browser == "chrome:Profile 1"
 
 
 def test_proxy_media_idle_ttl_seconds_is_configurable() -> None:
@@ -87,6 +104,11 @@ def test_image_proxy_mode_is_configurable() -> None:
 def test_cookies_from_browser_rejects_invalid_custom_value() -> None:
     with pytest.raises(ValueError, match="invalid cookies_from_browser"):
         Config(cookies_from_browser={"mode": "custom", "value": "chrome:"})
+
+
+def test_cookies_from_browser_rejects_value_outside_custom_mode() -> None:
+    with pytest.raises(ValueError, match="value is only supported in custom mode"):
+        Config(cookies_from_browser={"mode": "firefox_data_dir", "value": "firefox:Profile"})
 def test_default_search_provider_rejects_unknown_value() -> None:
     with pytest.raises(ValueError, match="unsupported default_search_provider"):
         Config(default_search_provider="auto")
