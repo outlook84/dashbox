@@ -430,7 +430,7 @@ wheels = [
 
 [[package]]
 name = "dashbox"
-version = "0.1.4.post202605200720"
+version = "0.1.4.post202605201245"
 source = { editable = "." }
 dependencies = [
     { name = "bcrypt" },
