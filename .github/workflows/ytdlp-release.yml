@@ -52,21 +52,28 @@ jobs:
           version="$(python -c 'import tomllib; data = tomllib.load(open("uv.lock", "rb")); print(next(package["version"] for package in data["package"] if package["name"] == "yt-dlp"))')"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      - name: Stop when yt-dlp is current
-        if: steps.current.outputs.version == steps.updated.outputs.version
-        run: echo "yt-dlp is already current at ${{ steps.current.outputs.version }}"
+      - name: Resolve release intent
+        id: intent
+        run: >
+          python scripts/resolve_ytdlp_release_intent.py
+          --current-ytdlp-version "${{ steps.current.outputs.version }}"
+          --updated-ytdlp-version "${{ steps.updated.outputs.version }}"
+
+      - name: Stop when release is current
+        if: steps.intent.outputs.should_release != 'true'
+        run: echo "yt-dlp ${{ steps.current.outputs.version }} is already released for ${{ steps.intent.outputs.package_base }}"
 
       - name: Prepare release version
         id: release
-        if: steps.current.outputs.version != steps.updated.outputs.version
+        if: steps.intent.outputs.should_release == 'true'
         run: uv run --with packaging python scripts/prepare_ytdlp_release.py
 
       - name: Refresh lock metadata
-        if: steps.current.outputs.version != steps.updated.outputs.version
+        if: steps.intent.outputs.should_release == 'true'
         run: uv lock --upgrade-package yt-dlp --prerelease allow
 
       - name: Verify expected files changed
-        if: steps.current.outputs.version != steps.updated.outputs.version
+        if: steps.intent.outputs.should_release == 'true'
         shell: bash
         run: |
           changed="$(git diff --name-only)"
@@ -78,22 +85,22 @@ jobs:
           fi
 
       - name: Run focused tests
-        if: steps.current.outputs.version != steps.updated.outputs.version
+        if: steps.intent.outputs.should_release == 'true'
         run: uv run pytest tests/media/test_ytdlp_client.py
 
       - name: Commit and tag release
-        if: steps.current.outputs.version != steps.updated.outputs.version
+        if: steps.intent.outputs.should_release == 'true'
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add pyproject.toml uv.lock
-          git commit -m "chore: update yt-dlp to ${{ steps.release.outputs.ytdlp_version }}"
+          git commit -m "chore: release yt-dlp ${{ steps.release.outputs.ytdlp_version }} for ${{ steps.release.outputs.base_version }}"
           git tag "${{ steps.release.outputs.tag }}"
           git push origin HEAD:main "${{ steps.release.outputs.tag }}"
 
       - name: Trigger PyPI release
-        if: steps.current.outputs.version != steps.updated.outputs.version
+        if: steps.intent.outputs.should_release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
