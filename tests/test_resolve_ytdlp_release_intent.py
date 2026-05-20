@@ -5,7 +5,17 @@ import sys
 import scripts.resolve_ytdlp_release_intent as intent
 
 
-def run_intent(monkeypatch, capsys, *, version: str, tag_exists: bool, current: str, updated: str) -> dict[str, str]:
+def run_intent(
+    monkeypatch,
+    tmp_path,
+    *,
+    version: str,
+    tag_exists: bool,
+    current: str,
+    updated: str,
+) -> dict[str, str]:
+    output_path = tmp_path / "github-output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output_path))
     monkeypatch.setattr(intent, "project_version", lambda: version)
     monkeypatch.setattr(intent, "tag_exists", lambda tag: tag_exists)
     monkeypatch.setattr(
@@ -21,14 +31,14 @@ def run_intent(monkeypatch, capsys, *, version: str, tag_exists: bool, current: 
     )
 
     assert intent.main() == 0
-    lines = capsys.readouterr().out.splitlines()
+    lines = output_path.read_text(encoding="utf-8").splitlines()
     return dict(line.split("=", 1) for line in lines)
 
 
-def test_skips_when_ytdlp_version_and_current_release_tag_are_current(monkeypatch, capsys) -> None:
+def test_skips_when_ytdlp_version_and_current_release_tag_are_current(monkeypatch, tmp_path) -> None:
     outputs = run_intent(
         monkeypatch,
-        capsys,
+        tmp_path,
         version="0.1.1.post202605200323",
         tag_exists=True,
         current="2026.5.16",
@@ -42,10 +52,10 @@ def test_skips_when_ytdlp_version_and_current_release_tag_are_current(monkeypatc
     }
 
 
-def test_releases_when_ytdlp_version_is_current_but_release_tag_is_missing(monkeypatch, capsys) -> None:
+def test_releases_when_ytdlp_version_is_current_but_release_tag_is_missing(monkeypatch, tmp_path) -> None:
     outputs = run_intent(
         monkeypatch,
-        capsys,
+        tmp_path,
         version="0.1.1.post202605200323",
         tag_exists=False,
         current="2026.5.16",
@@ -59,10 +69,10 @@ def test_releases_when_ytdlp_version_is_current_but_release_tag_is_missing(monke
     }
 
 
-def test_releases_when_base_version_has_no_release_tag(monkeypatch, capsys) -> None:
+def test_releases_when_base_version_has_no_release_tag(monkeypatch, tmp_path) -> None:
     outputs = run_intent(
         monkeypatch,
-        capsys,
+        tmp_path,
         version="0.1.1",
         tag_exists=False,
         current="2026.5.16",
@@ -76,10 +86,10 @@ def test_releases_when_base_version_has_no_release_tag(monkeypatch, capsys) -> N
     }
 
 
-def test_releases_when_ytdlp_version_changes(monkeypatch, capsys) -> None:
+def test_releases_when_ytdlp_version_changes(monkeypatch, tmp_path) -> None:
     outputs = run_intent(
         monkeypatch,
-        capsys,
+        tmp_path,
         version="0.1.1",
         tag_exists=True,
         current="2026.5.16",
@@ -91,3 +101,11 @@ def test_releases_when_ytdlp_version_changes(monkeypatch, capsys) -> None:
         "ref_base": "0.1.1",
         "should_release": "true",
     }
+
+
+def test_prints_outputs_without_github_output(monkeypatch, capsys) -> None:
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+
+    intent.write_output("should_release", "true")
+
+    assert capsys.readouterr().out == "should_release=true\n"
