@@ -8,7 +8,6 @@ import pytest
 
 import dashbox.server.app as app_server
 import dashbox.server.cli as server_cli
-import dashbox.server.static as server_static
 import dashbox.server.utils as server_utils
 from fastapi import HTTPException
 from fastapi.responses import Response
@@ -262,12 +261,16 @@ def test_icon_route_serves_png_assets() -> None:
         assert response.content.startswith(b"\x89PNG")
 
 
-def test_spider_route_serves_configured_asset() -> None:
+def test_spider_route_serves_configured_asset_path(monkeypatch, tmp_path) -> None:
+    asset_path = tmp_path / "dashbox.test.js"
+    asset_path.write_bytes(b"console.log('dashbox test spider');\n")
+    monkeypatch.setattr(app_server, "SPIDER_ASSET_PATH", asset_path)
+
     with no_lifespan_test_client(app_server.create_app(Config())) as client:
-        response = client.get(f"/spider/{server_static.SPIDER_ASSET_PATH.name}")
+        response = client.get(f"/spider/{asset_path.name}")
 
     assert response.status_code == 200
-    assert response.content == server_static.SPIDER_ASSET_PATH.read_bytes()
+    assert response.content == asset_path.read_bytes()
 
 
 def test_image_route_is_disabled_when_image_proxy_mode_is_off() -> None:
