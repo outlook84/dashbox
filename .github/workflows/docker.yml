@@ -2,8 +2,6 @@ name: Docker
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "23 */6 * * *"
 
 permissions:
   contents: read
@@ -21,29 +19,12 @@ jobs:
       matrix: ${{ steps.matrix.outputs.matrix }}
       should_build: ${{ steps.matrix.outputs.should_build }}
     steps:
-      - name: Checkout tags
-        if: github.event_name == 'schedule'
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
       - name: Select build targets
         id: matrix
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            latest_tag="$(git tag -l 'v*' --sort=-v:refname | head -n 1)"
-            if [ -n "$latest_tag" ]; then
-              echo 'matrix={"target":["release"]}' >> "$GITHUB_OUTPUT"
-              echo 'should_build=true' >> "$GITHUB_OUTPUT"
-            else
-              echo 'matrix={"target":["current"]}' >> "$GITHUB_OUTPUT"
-              echo 'should_build=false' >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo 'matrix={"target":["current"]}' >> "$GITHUB_OUTPUT"
-            echo 'should_build=true' >> "$GITHUB_OUTPUT"
-          fi
+          echo 'matrix={"target":["current"]}' >> "$GITHUB_OUTPUT"
+          echo 'should_build=true' >> "$GITHUB_OUTPUT"
 
   build:
     name: Build ${{ matrix.target }}
@@ -60,32 +41,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Select scheduled release tag
-        id: scheduled_ref
-        if: github.event_name == 'schedule' && matrix.target == 'release'
-        shell: bash
-        run: |
-          latest_tag="$(git tag -l 'v*' --sort=-v:refname | head -n 1)"
-          if [ -z "$latest_tag" ]; then
-            echo "No v* release tag found" >&2
-            exit 1
-          fi
-          git checkout --detach "$latest_tag"
-          echo "ref_name=$latest_tag" >> "$GITHUB_OUTPUT"
-          echo "ref_type=tag" >> "$GITHUB_OUTPUT"
-          echo "Using latest release tag for scheduled build: $latest_tag"
-
       - name: Select workflow ref
         id: build_ref
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            ref_name="${{ steps.scheduled_ref.outputs.ref_name }}"
-            ref_type="${{ steps.scheduled_ref.outputs.ref_type }}"
-          else
-            ref_name="${GITHUB_REF_NAME}"
-            ref_type="${GITHUB_REF_TYPE}"
-          fi
+          ref_name="${GITHUB_REF_NAME}"
+          ref_type="${GITHUB_REF_TYPE}"
           ref_name="${ref_name//\//-}"
           echo "name=$ref_name" >> "$GITHUB_OUTPUT"
           echo "type=$ref_type" >> "$GITHUB_OUTPUT"
@@ -113,9 +74,12 @@ jobs:
         shell: bash
         run: |
           expected_tag="v${{ steps.package.outputs.version }}"
+          package_base="${{ steps.package.outputs.version }}"
+          package_base="${package_base%%.post*}"
           actual_tag="${{ steps.build_ref.outputs.name }}"
-          if [ "$actual_tag" != "$expected_tag" ]; then
-            echo "Release tag $actual_tag does not match pyproject.toml version $expected_tag" >&2
+          expected_ytdlp_prefix="v${package_base}.ytdlp."
+          if [ "$actual_tag" != "$expected_tag" ] && [[ "$actual_tag" != "$expected_ytdlp_prefix"* ]]; then
+            echo "Release tag $actual_tag does not match pyproject.toml version $expected_tag or ytdlp prefix $expected_ytdlp_prefix" >&2
             exit 1
           fi
 
@@ -123,9 +87,6 @@ jobs:
         uses: astral-sh/setup-uv@v8.1.0
         with:
           version: "0.11.8"
-
-      - name: Update yt-dlp nightly lock
-        run: uv lock --upgrade-package yt-dlp --prerelease allow
 
       - name: Resolve yt-dlp version
         id: ytdlp
@@ -146,12 +107,15 @@ jobs:
         run: |
           image="${{ steps.image.outputs.name }}"
           package_version="${{ steps.package.outputs.version }}"
+          package_base="${package_version%%.post*}"
           ytdlp_version="${{ steps.ytdlp.outputs.version }}"
           ref_name="${{ steps.build_ref.outputs.name }}"
           ref_type="${{ steps.build_ref.outputs.type }}"
           tags=()
 
-          if [ "$ref_type" = "tag" ]; then
+          if [ "$ref_type" = "tag" ] && [[ "$ref_name" = "v${package_base}.ytdlp."* ]]; then
+            tags+=("${image}:${ref_name}")
+          elif [ "$ref_type" = "tag" ]; then
             tags+=("${image}:v${package_version}")
             tags+=("${image}:v${package_version}-yt-dlp-${ytdlp_version}")
             tags+=("${image}:latest")
@@ -176,60 +140,30 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check existing scheduled image
-        id: existing
-        if: github.event_name == 'schedule'
-        shell: bash
-        run: |
-          image="${{ steps.image.outputs.name }}"
-          package_version="${{ steps.package.outputs.version }}"
-          ytdlp_version="${{ steps.ytdlp.outputs.version }}"
-          ref_name="${{ steps.build_ref.outputs.name }}"
-          ref_type="${{ steps.build_ref.outputs.type }}"
-          if [ "$ref_type" = "tag" ]; then
-            tag="v${package_version}-yt-dlp-${ytdlp_version}"
-          else
-            tag="${ref_name}-py-${package_version}-yt-dlp-${ytdlp_version}"
-          fi
-          if docker buildx imagetools inspect "${image}:${tag}" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "Image tag already exists: ${image}:${tag}"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "Image tag does not exist: ${image}:${tag}"
-          fi
-
       - name: Set up QEMU
-        if: steps.existing.outputs.exists != 'true'
         uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        if: steps.existing.outputs.exists != 'true'
         uses: docker/setup-buildx-action@v4
 
       - name: Set up pnpm
-        if: steps.existing.outputs.exists != 'true'
         uses: pnpm/action-setup@v6
         with:
           version: 10.33.4
 
       - name: Set up Node.js
-        if: steps.existing.outputs.exists != 'true'
         uses: actions/setup-node@v6
         with:
           node-version: "22.13"
           cache: pnpm
 
       - name: Install frontend dependencies
-        if: steps.existing.outputs.exists != 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Build frontend assets
-        if: steps.existing.outputs.exists != 'true'
         run: pnpm run build
 
       - name: Build and push image
-        if: steps.existing.outputs.exists != 'true'
         uses: docker/build-push-action@v7
         with:
           context: .

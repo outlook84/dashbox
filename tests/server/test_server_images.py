@@ -212,7 +212,7 @@ def test_startup_logs_dashbox_and_ytdlp_versions(caplog) -> None:
     with caplog.at_level(logging.INFO, logger="dashbox"):
         server_utils.log_startup_versions(state)
 
-    assert "dashbox version=0.1.0 yt-dlp version=2026.5.16" in caplog.text
+    assert f"dashbox version={server_utils.__version__} yt-dlp version=2026.5.16" in caplog.text
 
 
 def test_image_fetch_manager_coalesces_concurrent_requests(monkeypatch) -> None:
