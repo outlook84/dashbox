@@ -5,6 +5,11 @@ TVBox/CatVodSpider 客户端，`type: "kodi"` 用于 Kodi 插件。
 
 ## TVBox
 
+以下 TVBox App 壳已完成测试：
+
+- [takagen99/Box](https://github.com/takagen99/Box)
+- [FongMi/TV](https://github.com/FongMi/TV)
+
 在管理界面创建或编辑 TVBox 订阅后，把下面的地址加入 TVBox 客户端：
 
 ```text

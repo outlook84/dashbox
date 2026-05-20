@@ -31,6 +31,11 @@ and YouTube subtitles are sent with playback requests.
 
 ## TVBox
 
+The following TVBox app shells have been tested:
+
+- [takagen99/Box](https://github.com/takagen99/Box)
+- [FongMi/TV](https://github.com/FongMi/TV)
+
 Create or edit a TVBox subscription in the admin UI, then add this URL to the
 TVBox client:
 
