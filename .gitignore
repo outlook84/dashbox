@@ -3,6 +3,7 @@ config.json.bak
 admin_access_code_hash
 *.log
 node_modules
+.pnpm-store/
 __pycache__
 dashbox*.js
 .pytest_cache

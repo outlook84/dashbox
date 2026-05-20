@@ -597,6 +597,46 @@ h2 {
   color: var(--color-brand-hover);
 }
 
+.field-label-mobile-tooltip {
+  background: #18181b;
+  border: 1px solid var(--color-brand);
+  border-radius: 8px;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.36);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  left: 16px;
+  line-height: 1.5;
+  max-width: 420px;
+  overflow-wrap: anywhere;
+  padding: 14px 16px 14px 18px;
+  position: fixed;
+  right: 16px;
+  white-space: normal;
+  z-index: 4000;
+}
+
+.field-label-mobile-tooltip::before {
+  background: var(--color-brand);
+  border-radius: 8px 0 0 8px;
+  bottom: 0;
+  content: "";
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 4px;
+}
+
+@media (min-width: 452px) {
+  .field-label-mobile-tooltip {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(420px, calc(100vw - 32px));
+  }
+}
+
 .form-hint {
   color: var(--color-text-muted);
   font-size: 12px;
