@@ -1,7 +1,6 @@
 # 安装与启动
 
-Dashbox 需要 Python 3.11 或更新版本。从源码开发还需要 Node.js 22.13 或更新版本
-以及 `pnpm` 10.33.4。
+Dashbox 需要 Python 3.11 或更新版本。从源码开发还需要 Node.js 22.13 或更新版本。
 
 启动 Dashbox 时请显式设置 `--public-base-url`，值为客户端实际访问 Dashbox 的
 完整地址，例如 `http://192.168.6.10:18990` 或反向代理后的 HTTPS 域名。

@@ -1,7 +1,7 @@
 # Installation
 
 Dashbox requires Python 3.11 or newer. Source development also requires Node.js
-22.13 or newer and `pnpm` 10.33.4.
+22.13 or newer.
 
 Always start Dashbox with an explicit `--public-base-url` set to the full URL
 that clients use to reach it, such as `http://192.168.6.10:18990` or the HTTPS

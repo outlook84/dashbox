@@ -15,6 +15,7 @@ Dashbox 适合在本机或私有网络中使用，不适合作为公开互联网
   Dashbox 和 yt-dlp、使用管理界面。
 - [TVBox 与 Kodi 客户端配置](client-setup.md)：把 TVBox 订阅和 Kodi 插件连到
   Dashbox 服务。
+- [支持的网站](supported-sites.md)：详细列出对 YouTube、哔哩哔哩等网站支持的 URL 格式。
 - [配置字段](config-fields.md)：JSON 配置结构、环境变量和前端 tooltip 短说明。
 - [开发](development.md)：仓库结构、构建、测试和生成资产。
 

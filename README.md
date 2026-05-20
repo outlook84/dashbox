@@ -32,7 +32,9 @@ public internet service.
 ## Documentation
 
 - [Installation](docs/en/installation.md)
+- [Supported websites](docs/en/supported-sites.md)
 - [Kodi and TVBox client setup](docs/en/client-setup.md)
+- [Supported websites](docs/en/supported-sites.md)
 - [Configuration fields](docs/en/config-fields.md)
 - [Development](docs/en/development.md)
 - [Example config](config.example.json)
