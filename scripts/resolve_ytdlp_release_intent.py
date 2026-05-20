@@ -25,10 +25,6 @@ def parse_project_version(version: str) -> re.Match[str]:
     return match
 
 
-def tag_safe(value: str) -> str:
-    return re.sub(r"[^0-9A-Za-z_.-]+", "-", value).strip(".-")
-
-
 def write_output(name: str, value: str) -> None:
     output = os.environ.get("GITHUB_OUTPUT")
     if output:
@@ -38,20 +34,18 @@ def write_output(name: str, value: str) -> None:
         print(f"{name}={value}")
 
 
-def latest_release_tag(ytdlp_version: str) -> str:
+def release_tag(version: str) -> str:
+    return f"v{version}"
+
+
+def tag_exists(tag: str) -> bool:
     result = subprocess.run(
-        ["git", "tag", "--list", f"v*.ytdlp.{tag_safe(ytdlp_version)}", "--sort=-v:refname"],
+        ["git", "tag", "--list", tag],
         check=True,
         stdout=subprocess.PIPE,
         text=True,
     )
-    return result.stdout.splitlines()[0] if result.stdout else ""
-
-
-def release_base_from_tag(tag: str) -> str:
-    if not tag:
-        return ""
-    return tag.removeprefix("v").split(".ytdlp.", 1)[0]
+    return tag in result.stdout.splitlines()
 
 
 def parse_args() -> argparse.Namespace:
@@ -63,12 +57,14 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    package_base = parse_project_version(project_version()).group("release")
-    ref_base = release_base_from_tag(latest_release_tag(args.updated_ytdlp_version))
-    should_release = args.current_ytdlp_version != args.updated_ytdlp_version or package_base != ref_base
+    current_version = project_version()
+    package_base = parse_project_version(current_version).group("release")
+    current_release_tag = release_tag(current_version)
+    has_current_release = tag_exists(current_release_tag)
+    should_release = args.current_ytdlp_version != args.updated_ytdlp_version or not has_current_release
 
     write_output("package_base", package_base)
-    write_output("ref_base", ref_base)
+    write_output("ref_base", package_base if has_current_release else "")
     write_output("should_release", "true" if should_release else "false")
     return 0
 

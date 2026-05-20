@@ -57,10 +57,6 @@ def next_post_version(version: str) -> str:
     return f"{match.group('release')}.post{post}"
 
 
-def tag_safe(value: str) -> str:
-    return re.sub(r"[^0-9A-Za-z_.-]+", "-", value).strip(".-")
-
-
 def ytdlp_dependency() -> str:
     matches = []
     for dependency in project_dependencies():
@@ -136,7 +132,7 @@ def main() -> int:
     ytdlp_version = locked_ytdlp_version()
     base_version = parse_project_version(current_version).group("release")
     new_version = next_post_version(current_version)
-    release_tag = f"v{base_version}.ytdlp.{tag_safe(ytdlp_version)}"
+    release_tag = f"v{new_version}"
 
     update_pyproject(new_version, ytdlp_version)
 

@@ -74,12 +74,9 @@ jobs:
         shell: bash
         run: |
           expected_tag="v${{ steps.package.outputs.version }}"
-          package_base="${{ steps.package.outputs.version }}"
-          package_base="${package_base%%.post*}"
           actual_tag="${{ steps.build_ref.outputs.name }}"
-          expected_ytdlp_prefix="v${package_base}.ytdlp."
-          if [ "$actual_tag" != "$expected_tag" ] && [[ "$actual_tag" != "$expected_ytdlp_prefix"* ]]; then
-            echo "Release tag $actual_tag does not match pyproject.toml version $expected_tag or ytdlp prefix $expected_ytdlp_prefix" >&2
+          if [ "$actual_tag" != "$expected_tag" ]; then
+            echo "Release tag $actual_tag does not match pyproject.toml version $expected_tag" >&2
             exit 1
           fi
 
@@ -88,46 +85,42 @@ jobs:
         with:
           version: "0.11.8"
 
-      - name: Resolve yt-dlp version
-        id: ytdlp
-        shell: bash
-        run: |
-          version="$(
-            python3 -c 'import tomllib; data = tomllib.load(open("uv.lock", "rb")); print(next(package["version"] for package in data["package"] if package["name"] == "yt-dlp"))'
-          )"
-          if [ -z "$version" ]; then
-            echo "Unable to resolve yt-dlp version" >&2
-            exit 1
-          fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
       - name: Build Docker tags
         id: tags
         shell: bash
         run: |
           image="${{ steps.image.outputs.name }}"
           package_version="${{ steps.package.outputs.version }}"
-          package_base="${package_version%%.post*}"
-          ytdlp_version="${{ steps.ytdlp.outputs.version }}"
           ref_name="${{ steps.build_ref.outputs.name }}"
           ref_type="${{ steps.build_ref.outputs.type }}"
-          tags=()
 
-          if [ "$ref_type" = "tag" ] && [[ "$ref_name" = "v${package_base}.ytdlp."* ]]; then
-            tags+=("${image}:${ref_name}")
-          elif [ "$ref_type" = "tag" ]; then
-            tags+=("${image}:v${package_version}")
-            tags+=("${image}:v${package_version}-yt-dlp-${ytdlp_version}")
-            tags+=("${image}:latest")
+          if [ "$ref_type" = "tag" ]; then
+            tag_names=(
+              "$ref_name"
+              "v${package_version}"
+              "latest"
+            )
           elif [ "$ref_name" = "main" ]; then
-            tags+=("${image}:main")
-            tags+=("${image}:main-py-${package_version}")
-            tags+=("${image}:main-py-${package_version}-yt-dlp-${ytdlp_version}")
+            tag_names=(
+              "main"
+              "main-py-${package_version}"
+            )
           else
-            tags+=("${image}:${ref_name}")
-            tags+=("${image}:${ref_name}-py-${package_version}")
-            tags+=("${image}:${ref_name}-py-${package_version}-yt-dlp-${ytdlp_version}")
+            tag_names=(
+              "$ref_name"
+              "${ref_name}-py-${package_version}"
+            )
           fi
+
+          tags=()
+          declare -A seen=()
+          for tag_name in "${tag_names[@]}"; do
+            if [ -n "${seen["$tag_name"]:-}" ]; then
+              continue
+            fi
+            seen["$tag_name"]=1
+            tags+=("${image}:${tag_name}")
+          done
 
           printf "tags<<EOF\n" >> "$GITHUB_OUTPUT"
           printf "%s\n" "${tags[@]}" >> "$GITHUB_OUTPUT"
