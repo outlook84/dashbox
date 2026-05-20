@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -60,6 +61,11 @@ def create_app(
     app = FastAPI(title="dashbox", version=__version__, lifespan=lifespan)
     app.add_middleware(HeadRequestMiddleware)
     app.state.dashbox = state
+
+    @app.exception_handler(TimeoutError)
+    async def timeout_error_handler(_request: Request, exc: TimeoutError) -> JSONResponse:
+        logger.warning("request timed out reason=%s", exception_reason(exc))
+        return json_response({"error": exception_reason(exc)}, status_code=504)
 
     def get_state() -> AppState:
         return app.state.dashbox
@@ -203,6 +209,9 @@ def create_app(
             value = await service.search(key, base)
             scope_image_urls(value, protocol="tvbox", sub_id=sub_id)
             return json_response(value)
+        except TimeoutError as exc:
+            logger.warning("tvbox request timed out reason=%s", exception_reason(exc))
+            return json_response({"error": exception_reason(exc)}, status_code=504)
         except Exception as exc:
             logger.exception("tvbox request failed")
             return json_response({"error": exception_reason(exc)}, status_code=400)
@@ -226,6 +235,9 @@ def create_app(
             value = await service.detail(id, base)
             scope_image_urls(value, protocol="tvbox", sub_id=sub_id)
             return json_response(value)
+        except TimeoutError as exc:
+            logger.warning("tvbox request timed out reason=%s", exception_reason(exc))
+            return json_response({"error": exception_reason(exc)}, status_code=504)
         except Exception as exc:
             logger.exception("tvbox request failed")
             return json_response({"error": exception_reason(exc)}, status_code=400)
@@ -247,6 +259,9 @@ def create_app(
             value = await service.play(id, base_url(current.config, request))
             attach_media_token(value, current)
             return json_response(value)
+        except TimeoutError as exc:
+            logger.warning("tvbox request timed out reason=%s", exception_reason(exc))
+            return json_response({"error": exception_reason(exc)}, status_code=504)
         except Exception as exc:
             logger.exception("tvbox request failed")
             return json_response({"error": exception_reason(exc)}, status_code=400)
@@ -272,7 +287,7 @@ def create_app(
         code = str(body.get("code") or "").strip() if isinstance(body, dict) else ""
         if not validate_access_code_shape(code):
             return json_response({"ok": False}, status_code=400)
-        if not verify_access_code(code, sub.access_code_hash):
+        if not await asyncio.to_thread(verify_access_code, code, sub.access_code_hash):
             current.auth_failures.record_failure(key)
             return json_response({"ok": False}, status_code=401)
         current.auth_failures.clear(key)
@@ -305,7 +320,7 @@ def create_app(
         code = str(body.get("code") or "").strip() if isinstance(body, dict) else ""
         if not validate_access_code_shape(code):
             return json_response({"ok": False}, status_code=400)
-        if not verify_access_code(code, sub.access_code_hash):
+        if not await asyncio.to_thread(verify_access_code, code, sub.access_code_hash):
             current.auth_failures.record_failure(key)
             return json_response({"ok": False}, status_code=401)
         current.auth_failures.clear(key)
@@ -351,6 +366,9 @@ def create_app(
             scope_kodi_image_urls(value, sub_id=sub_id)
             await register_image_urls(id, kodi.image_upstream_urls_from_page(value, current.config), current, protocol="kodi", sub_id=sub_id)
             return json_response(value)
+        except TimeoutError as exc:
+            logger.warning("kodi request timed out reason=%s", exception_reason(exc))
+            return json_response({"error": exception_reason(exc)}, status_code=504)
         except Exception as exc:
             logger.exception("kodi request failed")
             return json_response({"error": exception_reason(exc)}, status_code=400)
@@ -377,6 +395,9 @@ def create_app(
             scope_kodi_image_urls(value, sub_id=sub_id)
             await register_image_urls(id, kodi.image_upstream_urls_from_page(value, current.config), current, protocol="kodi", sub_id=sub_id)
             return json_response(value)
+        except TimeoutError as exc:
+            logger.warning("kodi request timed out reason=%s", exception_reason(exc))
+            return json_response({"error": exception_reason(exc)}, status_code=504)
         except Exception as exc:
             logger.exception("kodi request failed")
             return json_response({"error": exception_reason(exc)}, status_code=400)
@@ -400,6 +421,9 @@ def create_app(
                 value = service.page_response(page, base)
             scope_kodi_image_urls(value, sub_id=sub_id)
             return json_response(value)
+        except TimeoutError as exc:
+            logger.warning("kodi request timed out reason=%s", exception_reason(exc))
+            return json_response({"error": exception_reason(exc)}, status_code=504)
         except Exception as exc:
             logger.exception("kodi request failed")
             return json_response({"error": exception_reason(exc)}, status_code=400)
@@ -428,6 +452,9 @@ def create_app(
             attach_media_token(value, current)
             sync_inputstream_headers(value, current)
             return json_response(value)
+        except TimeoutError as exc:
+            logger.warning("kodi request timed out reason=%s", exception_reason(exc))
+            return json_response({"error": exception_reason(exc)}, status_code=504)
         except ValueError as exc:
             return json_response({"error": exception_reason(exc)}, status_code=400)
         except Exception as exc:

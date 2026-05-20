@@ -143,8 +143,18 @@ class AdminAuthState:
         validate_admin_access_code(access_code)
         if self.secret_dir is None or self.access_code_hash_path is None:
             raise HTTPException(status_code=409, detail="admin setup requires --data-dir, DASHBOX_DATA_DIR, --config, or DASHBOX_CONFIG")
+        access_code_hash = hash_admin_access_code(access_code)
+        self.complete_setup_with_hash(setup_code, access_code_hash)
+
+    def complete_setup_with_hash(self, setup_code: str, access_code_hash: str) -> None:
+        if not self.setup_required:
+            raise HTTPException(status_code=409, detail="admin setup is already complete")
+        if not secrets.compare_digest(setup_code, self.setup_code):
+            raise HTTPException(status_code=401, detail="invalid setup code")
+        if self.secret_dir is None or self.access_code_hash_path is None:
+            raise HTTPException(status_code=409, detail="admin setup requires --data-dir, DASHBOX_DATA_DIR, --config, or DASHBOX_CONFIG")
         self.secret_dir.mkdir(parents=True, exist_ok=True)
-        self.access_code_hash = hash_admin_access_code(access_code)
+        self.access_code_hash = access_code_hash
         self.access_code_hash_path.write_text(self.access_code_hash + "\n", encoding="utf-8")
         self.setup_code = ""
         if self.setup_code_path is not None and self.setup_code_path.exists():
@@ -154,8 +164,14 @@ class AdminAuthState:
         validate_admin_access_code(access_code)
         if self.secret_dir is None or self.access_code_hash_path is None:
             raise ValueError("admin access code update requires --data-dir, DASHBOX_DATA_DIR, --config, or DASHBOX_CONFIG")
+        access_code_hash = hash_admin_access_code(access_code)
+        self.update_access_code_with_hash(access_code_hash)
+
+    def update_access_code_with_hash(self, access_code_hash: str) -> None:
+        if self.secret_dir is None or self.access_code_hash_path is None:
+            raise ValueError("admin access code update requires --data-dir, DASHBOX_DATA_DIR, --config, or DASHBOX_CONFIG")
         self.secret_dir.mkdir(parents=True, exist_ok=True)
-        self.access_code_hash = hash_admin_access_code(access_code)
+        self.access_code_hash = access_code_hash
         self.access_code_hash_path.write_text(self.access_code_hash + "\n", encoding="utf-8")
 
 
@@ -223,7 +239,13 @@ def register_admin_routes(app: FastAPI, get_state: Callable[[], Any]) -> None:
         if current.admin.failures.is_limited(key):
             return json_response({"ok": False}, status_code=429)
         try:
-            current.admin.complete_setup(setup_code, access_code)
+            if not current.admin.setup_required:
+                raise HTTPException(status_code=409, detail="admin setup is already complete")
+            if not secrets.compare_digest(setup_code, current.admin.setup_code):
+                raise HTTPException(status_code=401, detail="invalid setup code")
+            validate_admin_access_code(access_code)
+            access_code_hash = await asyncio.to_thread(hash_admin_access_code, access_code)
+            current.admin.complete_setup_with_hash(setup_code, access_code_hash)
         except HTTPException:
             current.admin.failures.record_failure(key)
             raise
@@ -249,7 +271,7 @@ def register_admin_routes(app: FastAPI, get_state: Callable[[], Any]) -> None:
         key = admin_failure_limiter_key("login", request)
         if current.admin.failures.is_limited(key):
             return json_response({"ok": False}, status_code=429)
-        if not verify_admin_access_code(access_code, current.admin.access_code_hash):
+        if not await asyncio.to_thread(verify_admin_access_code, access_code, current.admin.access_code_hash):
             current.admin.failures.record_failure(key)
             return json_response({"ok": False}, status_code=401)
         current.admin.failures.clear(key)
@@ -352,7 +374,7 @@ def register_admin_routes(app: FastAPI, get_state: Callable[[], Any]) -> None:
             data = body.get("config") if isinstance(body, dict) else None
             if not isinstance(data, dict):
                 raise ValueError("config must be an object")
-            data = admin_editable_config_to_file_data(data, current.config)
+            data = await asyncio.to_thread(admin_editable_config_to_file_data, data, current.config)
             normalize_result = normalize_config_ids(data)
             file_config = parse_config_data(normalize_result.config, apply_env=False)
             validate_runtime_dependent_config(file_config, data_dir=current.data_dir)
@@ -392,7 +414,7 @@ def register_admin_routes(app: FastAPI, get_state: Callable[[], Any]) -> None:
         current: Any = Depends(get_state),
         load: bool = False,
     ) -> JSONResponse:
-        return json_response(current.service.reload_browser_cookies(load=load))
+        return json_response(await current.service.reload_browser_cookies_async(load=load))
 
     @app.post(
         "/admin/api/subscription-access-code/hash",
@@ -407,7 +429,7 @@ def register_admin_routes(app: FastAPI, get_state: Callable[[], Any]) -> None:
             raise HTTPException(status_code=400, detail="request body must be a JSON object")
         access_code = str(body.get("access_code") or "")
         try:
-            access_code_hash = hash_subscription_access_code(access_code)
+            access_code_hash = await asyncio.to_thread(hash_subscription_access_code, access_code)
         except ValueError as exc:
             return json_response({"ok": False, "error": str(exc)}, status_code=400)
         except Exception as exc:
@@ -428,10 +450,12 @@ def register_admin_routes(app: FastAPI, get_state: Callable[[], Any]) -> None:
             raise HTTPException(status_code=400, detail="request body must be a JSON object")
         current_access_code = str(body.get("current_access_code") or "")
         new_access_code = str(body.get("new_access_code") or "")
-        if not verify_admin_access_code(current_access_code, current.admin.access_code_hash):
+        if not await asyncio.to_thread(verify_admin_access_code, current_access_code, current.admin.access_code_hash):
             return json_response({"ok": False, "error": "current access code is incorrect"}, status_code=401)
         try:
-            current.admin.update_access_code(new_access_code)
+            validate_admin_access_code(new_access_code)
+            access_code_hash = await asyncio.to_thread(hash_admin_access_code, new_access_code)
+            current.admin.update_access_code_with_hash(access_code_hash)
         except ValueError as exc:
             return json_response({"ok": False, "error": str(exc)}, status_code=400)
         current.admin.sessions.delete_except(session.session_id)

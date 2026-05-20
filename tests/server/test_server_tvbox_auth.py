@@ -83,6 +83,7 @@ def test_app_state_reload_rebuilds_config_services_and_preserves_runtime_state()
     assert state.dash_store.get(session.token, touch=False) is session
     assert state.dash_store.idle_ttl_seconds == 240
     assert state.inline_manifest_store.idle_ttl_seconds == 240
+    assert state.playable_cache.wait_timeout == 60.0
     assert state.config.public_base_url == "http://dashbox.local:18990"
     assert state.service.config.user_agent == "Dashbox Test UA"
     assert state.tvbox_service("alt").playback_scope().proxy_dash_media_url is True
@@ -163,6 +164,28 @@ def test_tvbox_auth_route_issues_token_after_valid_code(monkeypatch) -> None:
     assert ok.json()["ok"] is True
     assert ok.json()["expires_at"] > 0
     assert authorized.status_code == 200
+
+
+def test_tvbox_play_timeout_returns_gateway_timeout() -> None:
+    config = Config(subs=(tvbox_sub("main"),))
+    app = server.create_app(config)
+    token, _ = issue_access_token(
+        secret=app.state.dashbox.token_secret,
+        sub_id="main",
+        audience="tvbox",
+        access_code_hash="",
+    )
+
+    async def timeout_play(_id: str, _base_url: str) -> dict:
+        raise TimeoutError("playable extraction is still running after 30s")
+
+    app.state.dashbox.tvbox_service("main").play = timeout_play
+
+    with no_lifespan_test_client(app) as client:
+        response = client.get("/tvbox/main/play", params={"id": "video"}, headers={"X-Access-Token": token})
+
+    assert response.status_code == 504
+    assert response.json() == {"error": "playable extraction is still running after 30s"}
 
 
 def test_media_manifest_rejects_missing_wrong_or_protocol_token_for_scoped_session() -> None:

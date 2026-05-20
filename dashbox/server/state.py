@@ -37,7 +37,7 @@ class AppState:
         self.stream_http_client = AppStreamHttpClient()
         self.dash_store = DashProxyStore(idle_ttl_seconds=config.proxy_media_idle_ttl_seconds)
         self.inline_manifest_store = InlineManifestStore(idle_ttl_seconds=config.proxy_media_idle_ttl_seconds)
-        self.playable_cache = PlayableInfoCache()
+        self.playable_cache = PlayableInfoCache(wait_timeout=playable_cache_wait_timeout(config))
         self.image_cache = ImageCache()
         self.image_fetcher = ImageFetchManager()
         self.image_prefetch = ImagePrefetchIndex()
@@ -52,6 +52,7 @@ class AppState:
         self.runtime_config = bind_runtime_config(config, self.data_dir)
         self.dash_store.idle_ttl_seconds = config.proxy_media_idle_ttl_seconds
         self.inline_manifest_store.idle_ttl_seconds = config.proxy_media_idle_ttl_seconds
+        self.playable_cache.wait_timeout = playable_cache_wait_timeout(config)
         self.service = MediaService(
             config,
             self.dash_store,
@@ -173,6 +174,10 @@ class AppHttpClient:
         self._client = None
         if client is not None:
             await client.aclose()
+
+
+def playable_cache_wait_timeout(config: Config) -> float:
+    return min(120.0, max(30.0, float(config.upstream_timeout) * 2.0))
 
 
 class AppStreamHttpClient:

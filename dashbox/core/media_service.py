@@ -225,6 +225,11 @@ class MediaService:
             self.ytdlp.browser_cookies.get_cookiejar()
         return self.ytdlp.browser_cookies.status()
 
+    async def reload_browser_cookies_async(self, *, load: bool = False) -> dict[str, Any]:
+        if load:
+            return await self.run_blocking(self.reload_browser_cookies, load=True)
+        return self.reload_browser_cookies(load=False)
+
     def browser_cookie_status(self) -> dict[str, Any]:
         return self.ytdlp.browser_cookies.status()
 
