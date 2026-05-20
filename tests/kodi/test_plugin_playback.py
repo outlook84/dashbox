@@ -17,6 +17,7 @@ class FakeAddon:
         "access_token": "token",
     }
     opened_settings = False
+    settings_after_open = None
 
     def getSetting(self, key):
         return self.settings.get(key, "")
@@ -28,7 +29,9 @@ class FakeAddon:
         return str(message_id)
 
     def openSettings(self):
-        self.opened_settings = True
+        type(self).opened_settings = True
+        if type(self).settings_after_open:
+            type(self).settings.update(type(self).settings_after_open)
 
 
 class FakeVideoInfoTag:
@@ -94,6 +97,7 @@ class FakeDialog:
     numeric_calls = []
     input_value = ""
     input_calls = []
+    notifications = []
 
     def input(self, *args, **kwargs):
         self.input_calls.append((args, kwargs))
@@ -104,6 +108,7 @@ class FakeDialog:
         return self.numeric_value
 
     def notification(self, *_args, **_kwargs):
+        self.notifications.append((_args, _kwargs))
         return None
 
 
@@ -129,8 +134,10 @@ class FakeClient:
     search_calls = []
     play_calls = []
     display_calls = []
+    init_calls = []
 
     def __init__(self, _gateway, _sub_id, _token):
+        FakeClient.init_calls.append((_gateway, _sub_id, _token))
         self.access_token = _token
 
     def auth(self, access_code):
@@ -198,12 +205,14 @@ def load_plugin_with_action(
     home_failures_before_success=0,
     numeric_value="",
     input_value="",
+    settings_after_open=None,
 ):
     resolved = {}
     events = []
     reset_fakes()
     if addon_settings:
         FakeAddon.settings.update(addon_settings)
+    FakeAddon.settings_after_open = settings_after_open
     FakeClient.auth_error_status = auth_error_status
     FakeClient.home_error_status = home_error_status
     FakeClient.home_failures_before_success = home_failures_before_success
@@ -239,10 +248,12 @@ def reset_fakes():
         "access_token": "token",
     }
     FakeAddon.opened_settings = False
+    FakeAddon.settings_after_open = None
     FakeDialog.numeric_value = ""
     FakeDialog.numeric_calls = []
     FakeDialog.input_value = ""
     FakeDialog.input_calls = []
+    FakeDialog.notifications = []
     FakeClient.auth_response = {"access_token": "token"}
     FakeClient.auth_error_status = 0
     FakeClient.auth_calls = []
@@ -258,6 +269,7 @@ def reset_fakes():
     FakeClient.search_calls = []
     FakeClient.play_calls = []
     FakeClient.display_calls = []
+    FakeClient.init_calls = []
 
 
 def codec_preferences(enabled_order, all_codecs):
@@ -578,6 +590,39 @@ def test_home_without_token_shows_auth_page_when_anonymous_auth_fails(monkeypatc
     assert [entry[1].label for entry in entries] == ["30016", "30010"]
     assert "action=authenticate" in entries[0][0]
     assert "action=settings" in entries[1][0]
+
+
+def test_home_rechecks_connection_settings_after_settings_dialog(monkeypatch):
+    load_plugin_with_action(
+        monkeypatch,
+        "",
+        addon_settings={
+            "gateway": "",
+            "sub_id": "",
+            "access_token": "",
+        },
+        settings_after_open={
+            "gateway": "http://dashbox.test",
+            "sub_id": "main",
+            "access_token": "",
+        },
+    )
+
+    assert FakeAddon.opened_settings is True
+    assert FakeClient.init_calls == [("http://dashbox.test", "main", "")]
+    assert FakeClient.auth_calls == [""]
+
+
+def test_settings_action_reports_missing_subscription_id(monkeypatch):
+    _module, _xbmc_module, _resolved = load_plugin_with_action(
+        monkeypatch,
+        "?action=settings",
+        addon_settings={"sub_id": ""},
+    )
+
+    assert FakeAddon.opened_settings is True
+    assert FakeDialog.notifications[-1][0] == ("Dashbox", "30012", "error", 5000)
+    assert FakeClient.init_calls == []
 
 
 def test_home_with_expired_token_clears_token_and_shows_auth_page(monkeypatch):

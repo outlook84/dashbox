@@ -74,14 +74,29 @@ def set_setting(key, value):
     ADDON.setSetting(key, value)
 
 
-def client():
+def connection_settings():
     gateway = settings_value("gateway")
     sub_id = settings_value("sub_id")
     token = settings_value("access_token")
     if not gateway or not sub_id:
-        ADDON.openSettings()
         raise DashboxError(localized(30012))
+    return gateway, sub_id, token
+
+
+def client():
+    try:
+        gateway, sub_id, token = connection_settings()
+    except DashboxError:
+        ADDON.openSettings()
+        gateway, sub_id, token = connection_settings()
     return DashboxClient(gateway, sub_id, token)
+
+
+def validate_connection_settings():
+    gateway = settings_value("gateway")
+    sub_id = settings_value("sub_id")
+    if not gateway or not sub_id:
+        raise DashboxError(localized(30012))
 
 
 def clear_token(api):
@@ -130,6 +145,7 @@ def route():
     action = first(params, "action") or "home"
     if action == "settings":
         ADDON.openSettings()
+        validate_connection_settings()
         xbmcplugin.endOfDirectory(HANDLE, succeeded=False)
         return
     api = client()
