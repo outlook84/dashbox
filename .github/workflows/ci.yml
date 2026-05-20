@@ -106,6 +106,9 @@ jobs:
       - name: Build bundled assets
         run: pnpm run build
 
+      - name: Check bundled assets
+        run: pnpm run check:assets
+
       - name: Build Python distributions
         run: uv build
 

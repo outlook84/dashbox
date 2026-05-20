@@ -262,10 +262,7 @@ def test_icon_route_serves_png_assets() -> None:
         assert response.content.startswith(b"\x89PNG")
 
 
-def test_spider_route_serves_hashed_asset() -> None:
-    assert server_static.SPIDER_ASSET_PATH.name != "dashbox.js"
-    assert server_static.SPIDER_ASSET_RE.match(server_static.SPIDER_ASSET_PATH.name)
-
+def test_spider_route_serves_configured_asset() -> None:
     with no_lifespan_test_client(app_server.create_app(Config())) as client:
         response = client.get(f"/spider/{server_static.SPIDER_ASSET_PATH.name}")
 

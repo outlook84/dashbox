@@ -1,5 +1,5 @@
 {
-  "name": "dashbox-tvbox-spider",
+  "name": "dashbox",
   "private": true,
   "license": "GPL-3.0-only",
   "packageManager": "pnpm@10.33.4",
@@ -10,6 +10,7 @@
     "build": "pnpm -r build",
     "build:admin": "pnpm --filter @dashbox/admin build",
     "build:spider": "pnpm --filter @dashbox/tvbox build",
+    "check:assets": "node scripts/check-assets.mjs",
     "lint": "pnpm -r lint",
     "lint:admin": "pnpm --filter @dashbox/admin lint",
     "lint:tvbox": "pnpm --filter @dashbox/tvbox lint",
