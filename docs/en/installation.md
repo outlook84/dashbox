@@ -32,6 +32,29 @@ can force reinstall the isolated `uv tool` environment and refresh `yt-dlp`:
 uv tool install --force dashbox --upgrade-package yt-dlp --prerelease=allow
 ```
 
+## Container Deployment
+
+Container image:
+
+```text
+ghcr.io/outlook84/dashbox:latest
+```
+
+Mount a persistent data directory and set the public URL that clients use to
+reach Dashbox:
+
+```bash
+docker run -d --name dashbox --restart unless-stopped -p 18990:18990 -v ./data:/data -e DASHBOX_PUBLIC_BASE_URL=http://192.168.6.10:18990 ghcr.io/outlook84/dashbox:latest
+```
+
+The image defaults to `DASHBOX_DATA_DIR=/data`, `DASHBOX_HOST=0.0.0.0`, and
+`DASHBOX_PORT=18990`. After the first start, the config file is stored on the
+host at `./data/config.json`. The admin UI is still served at:
+
+```text
+http://<server>:18990/admin
+```
+
 ## Run from Source
 
 For source setup, frontend asset builds, tests, and source environment
@@ -64,6 +87,45 @@ dashbox -c config.json --host 0.0.0.0 --port 18990 --public-base-url http://192.
 Other runtime settings such as `DASHBOX_UPSTREAM_TIMEOUT` and
 `DASHBOX_UNSAFE_IMAGE_PROXY_MODE` are documented in [Configuration
 fields](config-fields.md).
+
+## Firefox Data Dir Cookies
+
+To let yt-dlp read Firefox cookies from the Dashbox data directory, set
+`Browser cookies mode` to `Firefox (data dir)` in the admin UI, or put this in
+`config.json`:
+
+```json
+{
+  "cookies_from_browser": {
+    "mode": "firefox_data_dir"
+  }
+}
+```
+
+This mode requires Dashbox to start with `--data-dir` or `DASHBOX_DATA_DIR`.
+Dashbox resolves the cookie source to `<data-dir>/firefox-profile`, so place the
+Firefox profile files at:
+
+```text
+data/firefox-profile
+```
+
+Use a dedicated Firefox profile for Dashbox and sign in only to the sites that
+Dashbox needs to extract. Avoid reusing your everyday browser profile; a
+dedicated profile keeps the cookie scope smaller and avoids files being locked
+or changed while Firefox is running.
+
+You usually do not need to copy the full profile. Copy `cookies.sqlite` from the
+dedicated profile into `data/firefox-profile/`. If you use Firefox
+Multi-Account Containers, also copy `containers.json`:
+
+```text
+data/firefox-profile/cookies.sqlite
+data/firefox-profile/containers.json
+```
+
+For container deployments, the matching host path is `./data/firefox-profile`
+and the in-container path is `/data/firefox-profile`.
 
 ## Reverse Proxy or LAN Access
 
