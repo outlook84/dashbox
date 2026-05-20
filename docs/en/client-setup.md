@@ -21,6 +21,10 @@ Configure the add-on settings:
 - Subscription id: the `id` of a `type: "kodi"` subscription
 - Access code: only needed when the subscription uses access-code auth
 
+If Dashbox's public base URL changes after the repository has been installed,
+reinstall the Dashbox repository package from the new `/repo.zip` URL and update
+the add-on's Server URL setting manually.
+
 The Kodi add-on calls Dashbox's `/api/v1/subs/<sub-id>/...` endpoints. Kodi-side
 playback settings such as video height, frame rate, codec preference, danmaku,
 and YouTube subtitles are sent with playback requests.

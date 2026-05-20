@@ -38,5 +38,8 @@ http://<server>:18990/repo.zip
 - Subscription id：`type: "kodi"` 订阅的 `id`
 - Access code：仅在该订阅启用访问码认证时填写
 
+如果安装 repository 后 Dashbox 的公开访问 URL 发生变化，请从新的 `/repo.zip`
+重新安装 Dashbox repository 包，并手动更新插件设置里的 Server URL。
+
 Kodi 插件会调用 Dashbox 的 `/api/v1/subs/<sub-id>/...` 接口。Kodi 端的播放设置
 例如视频高度、帧率、编码偏好、弹幕和 YouTube 字幕，会在播放请求中传给服务端。
