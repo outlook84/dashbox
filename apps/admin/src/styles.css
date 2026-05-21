@@ -769,4 +769,27 @@ h2 {
   .page-heading {
     align-items: center;
   }
+
+  .sources-editor-modal {
+    border-radius: 0;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    width: 100vw;
+  }
+
+  .sources-editor-modal .n-card__content {
+    display: flex;
+    flex: 1 1 auto;
+  }
+
+  .sources-editor-modal .n-card__footer {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .sources-editor-modal .sources-editor {
+    flex: 1 1 auto;
+    max-height: none;
+  }
 }
