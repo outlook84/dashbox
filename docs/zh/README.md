@@ -5,6 +5,22 @@
 Dashbox 是一个面向 TVBox 与 Kodi 的由 `yt-dlp` 驱动的媒体服务。它可以统一管理
 视频源，并把内容提供给 TVBox 订阅和 Kodi 插件使用。
 
+## 界面截图
+
+![Dashbox 管理界面](Dashbox_Admin_cn.png)
+
+<details>
+<summary>客户端截图</summary>
+
+以下截图展示 Dashbox 输出在 TVBox 和 Kodi 客户端中的效果。第三方站点和媒体内容仅作
+已配置来源示例。
+
+![TVBox 客户端浏览 Dashbox 来源](tvbox_cn.png)
+
+![Kodi 客户端浏览 Dashbox 来源](kodi_cn.png)
+
+</details>
+
 ## 使用声明
 
 Dashbox 只是技术演示项目。使用者需要自行承担使用方式及不当使用引起的后果。

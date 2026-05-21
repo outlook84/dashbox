@@ -9,6 +9,22 @@ TVBox subscriptions and Kodi endpoints. Playback is resolved on the server with
 `yt-dlp`, so clients can browse sources, open details, search, and play videos
 through a local Dashbox service.
 
+## Screenshots
+
+![Dashbox admin UI](docs/en/Dashbox_Admin.png)
+
+<details>
+<summary>Client screenshots</summary>
+
+These screenshots show Dashbox output rendered in TVBox and Kodi clients. Third
+party sites and media are shown only as configured source examples.
+
+![Kodi client browsing Dashbox sources](docs/en/kodi.png)
+
+![TVBox client browsing Dashbox sources](docs/en/tvbox.png)
+
+</details>
+
 ## Notice
 
 Dashbox is a technical demonstration. You are responsible for how you use it and
