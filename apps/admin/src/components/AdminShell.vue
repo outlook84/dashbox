@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject } from "vue";
 import type { Ref } from "vue";
-import { NButton, NLayout, NLayoutContent, NLayoutHeader, NSelect, NSpace, NTooltip, useMessage } from "naive-ui";
+import { NButton, NLayout, NLayoutContent, NLayoutHeader, NSelect, NTooltip, useMessage } from "naive-ui";
 import { ExternalLink, Moon, Sun, TvMinimalPlay } from "@lucide/vue";
 import { logout } from "../api";
 import { locale, localeOptions, setLocale, t, type AdminLocale } from "../i18n";
