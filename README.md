@@ -2,10 +2,10 @@
 
 [中文文档](docs/zh/README.md)
 
-Dashbox is a small `yt-dlp`-powered media service for Kodi and TVBox.
+Dashbox is a small `yt-dlp`-powered media streaming service for Kodi and TVBox.
 
 It lets you describe video sources once, then exposes them as client-ready
-TVBox subscriptions and Kodi endpoints. Playback is resolved on the server with
+Kodi endpoints and TVBox subscriptions. Playback is resolved on the server with
 `yt-dlp`, so clients can browse sources, open details, search, and play videos
 through a local Dashbox service.
 

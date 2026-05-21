@@ -2,7 +2,7 @@
 
 [English](../../README.md)
 
-Dashbox 是一个面向 TVBox 与 Kodi 的由 `yt-dlp` 驱动的媒体服务。它可以统一管理
+Dashbox 是一个面向 TVBox 与 Kodi 的由 `yt-dlp` 驱动的流媒体服务。它可以统一管理
 视频源，并把内容提供给 TVBox 订阅和 Kodi 插件使用。
 
 ## 界面截图
