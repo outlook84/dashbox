@@ -5,9 +5,17 @@ on:
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
+      - "THIRD_PARTY_NOTICES.md"
   push:
     branches:
       - main
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
+      - "THIRD_PARTY_NOTICES.md"
 
 permissions:
   contents: read
