@@ -45,6 +45,7 @@ def test_admin_session_reports_setup_required_and_setup_creates_session(tmp_path
     assert not (tmp_path / "admin_setup_code").exists()
     assert after.json() == {"authenticated": True, "setup_required": False}
     assert status.status_code == 200
+    assert status.json()["project_url"] == admin.__project_url__
 
 
 def test_admin_setup_code_uses_data_dir_before_config_dir(tmp_path) -> None:

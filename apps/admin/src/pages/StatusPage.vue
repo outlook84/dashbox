@@ -9,9 +9,13 @@ import { displayLabel } from "../labels";
 import type { AdminStatus, ConfigResponse, CookieStatus, SubscriptionSummary } from "../types";
 
 const message = useMessage();
+const props = defineProps<{ adminStatus: AdminStatus | null }>();
+const emit = defineEmits<{
+  "status-loaded": [value: AdminStatus];
+}>();
 const loading = ref(false);
 const cookiesLoading = ref(false);
-const adminStatus = ref<AdminStatus | null>(null);
+const localStatus = ref<AdminStatus | null>(props.adminStatus);
 const configResponse = ref<ConfigResponse | null>(null);
 const cookies = ref<CookieStatus | null>(null);
 const narrowDescriptions = ref(false);
@@ -109,7 +113,8 @@ async function load() {
       readConfig(),
       cookieStatus()
     ]);
-    adminStatus.value = statusData;
+    localStatus.value = statusData;
+    emit("status-loaded", statusData);
     configResponse.value = configData;
     cookies.value = cookieData;
     fillSubscriptions(configData);
@@ -161,10 +166,10 @@ onBeforeUnmount(() => {
 
     <NCard size="small" :title="t('status.service')">
       <NDescriptions size="small" :column="statusDescriptionColumns" bordered>
-        <NDescriptionsItem :label="t('status.version')">v{{ adminStatus?.version || "0.1.0" }}</NDescriptionsItem>
-        <NDescriptionsItem :label="t('config.configFile')">{{ adminStatus?.config_path || t("common.notSet") }}</NDescriptionsItem>
+        <NDescriptionsItem :label="t('status.version')">v{{ localStatus?.version || "0.1.0" }}</NDescriptionsItem>
+        <NDescriptionsItem :label="t('config.configFile')">{{ localStatus?.config_path || t("common.notSet") }}</NDescriptionsItem>
         <NDescriptionsItem :label="t('status.configWritable')">
-          {{ adminStatus?.config_writable ? t("common.writable") : t("common.readonly") }}
+          {{ localStatus?.config_writable ? t("common.writable") : t("common.readonly") }}
         </NDescriptionsItem>
         <NDescriptionsItem v-for="[key, value] in envEntries" :key="key" :label="runtimeOverrideLabel(key)">
           {{ runtimeOverrideValue(key, value) }}

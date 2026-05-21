@@ -13,6 +13,7 @@ from urllib.parse import urlsplit
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, Response
 
+from . import __project_url__
 from .auth.access_code import (
     ADMIN_ACCESS_CODE_MAX_LENGTH,
     ADMIN_ACCESS_CODE_MIN_LENGTH,
@@ -302,6 +303,7 @@ def register_admin_routes(app: FastAPI, get_state: Callable[[], Any]) -> None:
             "ok": True,
             "config_path": str(config_path) if config_path else "",
             "config_writable": config_file_writable(config_path),
+            "project_url": __project_url__,
             "version": app.version,
         }
 

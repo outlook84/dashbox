@@ -7,6 +7,7 @@ export interface AdminStatus {
   ok: boolean;
   config_path: string;
   config_writable: boolean;
+  project_url: string;
   version: string;
 }
 

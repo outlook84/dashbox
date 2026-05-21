@@ -10,6 +10,7 @@ const messages = {
   "zh-CN": {
     "app.title": "Dashbox Admin",
     "app.loading": "Dashbox Admin",
+    "app.github": "打开 GitHub 仓库",
     "common.empty": "空",
     "common.notSet": "未设置",
     "common.refresh": "刷新",
@@ -222,6 +223,7 @@ const messages = {
   "en-US": {
     "app.title": "Dashbox Admin",
     "app.loading": "Dashbox Admin",
+    "app.github": "Open GitHub repository",
     "common.empty": "Empty",
     "common.notSet": "Not set",
     "common.refresh": "Refresh",

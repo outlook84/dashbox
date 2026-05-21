@@ -2,9 +2,9 @@
 import { computed, defineAsyncComponent, onMounted, ref, watch, provide } from "vue";
 import { NConfigProvider, NDialogProvider, NMessageProvider, darkTheme, useOsTheme } from "naive-ui";
 import type { GlobalThemeOverrides } from "naive-ui";
-import { onUnauthorized, session } from "./api";
+import { onUnauthorized, session, status as readStatus } from "./api";
 import { t } from "./i18n";
-import type { SessionState } from "./types";
+import type { AdminStatus, SessionState } from "./types";
 
 // ── Naive UI theme overrides ──────────────────────────────────────────
 const lightOverrides: GlobalThemeOverrides = {
@@ -85,6 +85,7 @@ function initialPage(): PageKey {
 
 const page = ref<PageKey>(initialPage());
 const sessionState = ref<SessionState | null>(null);
+const adminStatus = ref<AdminStatus | null>(null);
 const loading = ref(true);
 
 const authenticated = computed(() => sessionState.value?.authenticated === true);
@@ -93,6 +94,15 @@ async function refreshSession() {
   loading.value = true;
   try {
     sessionState.value = await session();
+    if (sessionState.value.authenticated) {
+      try {
+        adminStatus.value = await readStatus();
+      } catch {
+        adminStatus.value = null;
+      }
+    } else {
+      adminStatus.value = null;
+    }
   } finally {
     loading.value = false;
   }
@@ -100,10 +110,18 @@ async function refreshSession() {
 
 function handleAuthenticated(next: SessionState) {
   sessionState.value = next;
+  readStatus()
+    .then((nextStatus) => {
+      adminStatus.value = nextStatus;
+    })
+    .catch(() => {
+      adminStatus.value = null;
+    });
 }
 
 function handleUnauthorized() {
   sessionState.value = { authenticated: false, setup_required: false };
+  adminStatus.value = null;
 }
 
 onUnauthorized(handleUnauthorized);
@@ -128,8 +146,8 @@ watch(page, (next) => {
           :setup-required="sessionState?.setup_required === true"
           @authenticated="handleAuthenticated"
         />
-        <AdminShell v-else v-model:page="page" @logout="handleUnauthorized">
-          <StatusPage v-if="page === 'status'" />
+        <AdminShell v-else v-model:page="page" :admin-status="adminStatus" @logout="handleUnauthorized">
+          <StatusPage v-if="page === 'status'" :admin-status="adminStatus" @status-loaded="adminStatus = $event" />
           <ConfigPage v-else-if="page === 'config'" />
           <AccountPage v-else />
         </AdminShell>

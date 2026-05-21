@@ -260,8 +260,26 @@ h2 {
 }
 
 .topbar-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
   grid-column: 3;
   justify-self: end;
+  min-width: 0;
+}
+
+.topbar-icon-button {
+  align-items: center;
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.topbar-icon-button :deep(.n-button__content) {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
 }
 
 .locale-select {

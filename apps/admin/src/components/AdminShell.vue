@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { computed, inject } from "vue";
 import type { Ref } from "vue";
-import { NButton, NLayout, NLayoutContent, NLayoutHeader, NSelect, NSpace, useMessage } from "naive-ui";
-import { Moon, Sun, TvMinimalPlay } from "@lucide/vue";
+import { NButton, NLayout, NLayoutContent, NLayoutHeader, NSelect, NSpace, NTooltip, useMessage } from "naive-ui";
+import { ExternalLink, Moon, Sun, TvMinimalPlay } from "@lucide/vue";
 import { logout } from "../api";
 import { locale, localeOptions, setLocale, t, type AdminLocale } from "../i18n";
+import type { AdminStatus } from "../types";
 
 const isDark = inject<Ref<boolean>>("isDark");
 const toggleTheme = inject<() => void>("toggleTheme");
 
-const props = defineProps<{ page: string }>();
+const props = defineProps<{ page: string; adminStatus: AdminStatus | null }>();
 const emit = defineEmits<{
   "update:page": [value: string];
   logout: [];
@@ -27,6 +28,7 @@ const selected = computed({
   get: () => props.page,
   set: (value: string) => emit("update:page", value)
 });
+const projectUrl = computed(() => props.adminStatus?.project_url.trim() || "");
 
 async function doLogout() {
   await logout();
@@ -60,11 +62,32 @@ function changeLocale(value: string) {
           {{ item.label }}
         </button>
       </nav>
-      <NSpace align="center" justify="end" class="topbar-actions">
+      <div class="topbar-actions">
+        <NTooltip v-if="projectUrl" trigger="hover">
+          <template #trigger>
           <NButton
+            class="topbar-icon-button"
+            text
+            tag="a"
+            :href="projectUrl"
+            target="_blank"
+            rel="noreferrer"
+            size="small"
+            :aria-label="t('app.github')"
+          >
+            <template #icon>
+              <ExternalLink :size="16" />
+            </template>
+          </NButton>
+          </template>
+          {{ t("app.github") }}
+        </NTooltip>
+        <NTooltip trigger="hover">
+          <template #trigger>
+          <NButton
+            class="topbar-icon-button"
             text
             size="small"
-            style="vertical-align: middle;"
             :aria-label="isDark ? t('theme.switchLight') : t('theme.switchDark')"
             @click="toggleTheme"
           >
@@ -73,6 +96,9 @@ function changeLocale(value: string) {
               <Moon v-else :size="16" />
             </template>
           </NButton>
+          </template>
+          {{ isDark ? t("theme.switchLight") : t("theme.switchDark") }}
+        </NTooltip>
           <NSelect
           :value="locale"
           :options="localeOptions"
@@ -82,7 +108,7 @@ function changeLocale(value: string) {
           @update:value="changeLocale"
         />
         <NButton size="small" @click="doLogout">{{ t("common.logout") }}</NButton>
-      </NSpace>
+      </div>
     </NLayoutHeader>
     <NLayoutContent class="content">
       <slot />
