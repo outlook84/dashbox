@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dashbox"
-version = "0.1.5.post202605201245"
+version = "0.1.5.post202605210122"
 description = "A small yt-dlp powered Kodi/TVBox media streaming server."
 readme = "README.pypi.md"
 requires-python = ">=3.11"
