@@ -11,7 +11,6 @@ from dashbox.config import (
     SearchProvider,
     Subscription,
     TvboxSubscriptionConfig,
-    YtdlpSearchPrefixMode,
 )
 from dashbox.config.runtime import bind_runtime_config
 from dashbox.core import search_urls
