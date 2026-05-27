@@ -30,7 +30,7 @@ configured login cookies or credentials.
 | Videos | BV/AV video pages, `player.bilibili.com` embeds, dynamics, articles/Opus pages, and festival/event pages |
 | Live and audio | `https://live.bilibili.com/{room_id}`, `/blanc/{room_id}`, single audio `/audio/au...`, audio albums `/audio/am...` |
 | Professional content | Bangumi episodes, Bangumi seasons, Bangumi media details, Cheese course episodes, and Cheese seasons |
-| User content | Watch Later, favorites, medialists, user space collections, user space series, and space audio uploads |
+| User content | Watch Later, favorites, medialists, user space video uploads `https://space.bilibili.com/{mid}`, `/{mid}/video`, `/{mid}/upload/video`, user space collections, user space series, and space audio uploads `/{mid}/audio`, `/{mid}/upload/audio` |
 | Search and categories | Bilibili search pages, main categories, and sub-categories `/v/{category}/{subcategory}` |
 | Extra features | Automatic danmaku retrieval and conversion to a client-friendly format |
 

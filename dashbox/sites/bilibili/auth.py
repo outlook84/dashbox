@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import random
 import time
 from typing import Any
 from urllib.parse import quote, urlencode
@@ -53,6 +54,19 @@ def encode_wbi_params(params: dict[str, Any], mixin_key: str) -> dict[str, Any]:
     query = urlencode(sorted(filtered.items()), quote_via=quote)
     filtered["w_rid"] = hashlib.md5((query + mixin_key).encode("utf-8")).hexdigest()
     return filtered
+
+
+def add_wbi2_params(params: dict[str, Any]) -> dict[str, Any]:
+    dm_rand = "ABCDEFGHIJK"
+    params.update(
+        {
+            "dm_img_list": "[]",
+            "dm_img_str": "".join(random.sample(dm_rand, 2)),
+            "dm_cover_img_str": "".join(random.sample(dm_rand, 2)),
+            "dm_img_inter": '{"ds":[],"wh":[0,0,0],"of":[0,0,0]}',
+        }
+    )
+    return params
 
 
 def wbi_signature_is_invalid(payload: dict[str, Any]) -> bool:

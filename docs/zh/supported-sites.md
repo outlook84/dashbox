@@ -29,7 +29,7 @@ Dashbox 的媒体播放解析委托给 `yt-dlp`。除通用的 `yt-dlp` 解析�
 | 视频 | BV/AV 视频页、`player.bilibili.com` 嵌入页、动态、专栏/Opus、节日活动页 |
 | 直播和音频 | `https://live.bilibili.com/{room_id}`、`/blanc/{room_id}`、单音频 `/audio/au...`、音频歌单 `/audio/am...` |
 | 专业内容 | 番剧/影视集数、番剧季度、番剧媒体详情、课堂课程集数和课程季度 |
-| 用户内容 | 稍后观看、个人收藏夹、播单、用户空间合集、用户空间系列、用户空间音频投稿 |
+| 用户内容 | 稍后观看、个人收藏夹、播单、用户空间投稿 `https://space.bilibili.com/{mid}`、`/{mid}/video`、`/{mid}/upload/video`、用户空间合集、用户空间系列、用户空间音频投稿 `/{mid}/audio`、`/{mid}/upload/audio` |
 | 搜索和分区 | 哔哩哔哩搜索页，以及主分区和子分区 `/v/{category}/{subcategory}` |
 | 附加能力 | 自动获取弹幕并转换为客户端支持的格式 |
 

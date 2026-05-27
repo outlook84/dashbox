@@ -56,6 +56,9 @@ def test_bilibili_playlist_url_shapes_match_yt_dlp_extractors() -> None:
     assert bilibili.config_node_kind("https://space.bilibili.com/60000001/lists/3662502") == NodeKind.PLAYLIST_DIRECTORY
     assert bilibili.config_node_kind("https://space.bilibili.com/60000002/channel/seriesdetail?sid=70000002&ctype=0") == NodeKind.PLAYLIST_DIRECTORY
     assert bilibili.config_node_kind("https://space.bilibili.com/60000002/lists/70000002?type=series") == NodeKind.PLAYLIST_DIRECTORY
+    assert bilibili.config_node_kind("https://space.bilibili.com/60000004") == NodeKind.PLAYLIST_DIRECTORY
+    assert bilibili.config_node_kind("https://space.bilibili.com/60000004/video") == NodeKind.PLAYLIST_DIRECTORY
+    assert bilibili.config_node_kind("https://space.bilibili.com/60000004/upload/video") == NodeKind.PLAYLIST_DIRECTORY
     assert bilibili.config_node_kind("https://space.bilibili.com/60000003/audio") == NodeKind.PLAYLIST_DIRECTORY
     assert bilibili.config_node_kind("https://space.bilibili.com/60000003/upload/audio") == NodeKind.PLAYLIST_DIRECTORY
     selected_medialist_url = "https://www.bilibili.com/medialist/play/ml123/BV1xx411c7mD"
@@ -94,6 +97,10 @@ def test_bilibili_space_list_urls_are_classified_by_type() -> None:
     assert bilibili.space_series_ids_from_url(series_url) == {"mid": "60000002", "sid": "70000002"}
     assert bilibili.space_collection_ids_from_url(series_url) == {}
     assert bilibili.space_series_ids_from_url(collection_url) == {}
+    assert bilibili.space_video_mid_from_url("https://space.bilibili.com/60000004") == "60000004"
+    assert bilibili.space_video_mid_from_url("https://space.bilibili.com/60000004/video") == "60000004"
+    assert bilibili.space_video_mid_from_url("https://space.bilibili.com/60000004/upload/video") == "60000004"
+    assert bilibili.space_video_mid_from_url("https://space.bilibili.com/60000004/dynamic") == ""
     assert bilibili.space_audio_mid_from_url("https://space.bilibili.com/60000003/upload/audio") == "60000003"
 
 

@@ -7,6 +7,7 @@ from __future__ import annotations
 from .auth import (
     WBI_MIXIN_KEY_ENC_TAB,
     WBI_MIXIN_KEY_TTL_SECONDS,
+    add_wbi2_params,
     cookie_header_from_dict,
     encode_wbi_params,
     parse_cookie_header,
@@ -97,6 +98,7 @@ from .urls import (
     is_space_audio_url,
     is_space_collection_url,
     is_space_series_url,
+    is_space_video_url,
     is_supported_short_url_target,
     is_video_playlist,
     is_video_url,
@@ -120,6 +122,7 @@ from .urls import (
     space_audio_mid_from_url,
     space_collection_ids_from_url,
     space_series_ids_from_url,
+    space_video_mid_from_url,
     supported_short_url_target,
     supports_video_api_metadata,
     video_metadata_from_payload,

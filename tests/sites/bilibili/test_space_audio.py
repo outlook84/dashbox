@@ -216,11 +216,30 @@ def test_space_audio_metadata_uses_upper_audio_api(monkeypatch) -> None:
     calls: list[dict] = []
 
     class FakeResponse:
+        def __init__(self, payload: dict) -> None:
+            self.payload = payload
+
         def raise_for_status(self) -> None:
             return None
 
         def json(self) -> dict:
-            return {
+            return self.payload
+
+    class FakeAsyncClient:
+        async def get(self, url: str, params: dict, headers: dict):
+            calls.append({"url": url, "params": params, "headers": headers})
+            if url.endswith("/x/web-interface/card"):
+                return FakeResponse({
+                    "code": 0,
+                    "data": {
+                        "card": {
+                            "name": "Sample UP",
+                            "face": "https://i0.hdslb.com/bfs/face.jpg",
+                            "sign": "Sample sign",
+                        }
+                    },
+                })
+            return FakeResponse({
                 "code": 0,
                 "data": {
                     "data": [{"id": 40000001, "title": "Sample Song", "cover": "https://i0.hdslb.com/bfs/song.jpg"}],
@@ -228,20 +247,19 @@ def test_space_audio_metadata_uses_upper_audio_api(monkeypatch) -> None:
                     "pageSize": 30,
                     "totalSize": 7,
                 },
-            }
-
-    class FakeAsyncClient:
-        async def get(self, url: str, params: dict, headers: dict):
-            calls.append({"url": url, "params": params, "headers": headers})
-            return FakeResponse()
+            })
 
     site = bilibili.BilibiliSite(http_client_provider=lambda: FakeAsyncClient())
 
     value = asyncio.run(site.space_audio_metadata("https://space.bilibili.com/60000003/upload/audio"))
 
-    assert calls[0]["url"] == "https://api.bilibili.com/audio/music-service/web/song/upper"
-    assert calls[0]["params"] == {"uid": "60000003", "pn": 1, "ps": 30, "order": 1}
-    assert value["title"] == "60000003 - 音频"
+    assert calls[0]["url"] == "https://api.bilibili.com/x/web-interface/card"
+    assert calls[0]["params"] == {"mid": "60000003"}
+    assert calls[1]["url"] == "https://api.bilibili.com/audio/music-service/web/song/upper"
+    assert calls[1]["params"] == {"uid": "60000003", "pn": 1, "ps": 30, "order": 1}
+    assert value["title"] == "Sample UP - 音频"
+    assert value["thumbnail"] == "https://i0.hdslb.com/bfs/face.jpg"
+    assert value["description"] == "Sample sign"
     assert value["total"] == 7
     assert value["entries"][0]["id"] == 40000001
 
@@ -250,11 +268,21 @@ def test_space_audio_metadata_keeps_total_when_list_limit_stops_first_page(monke
     calls: list[dict] = []
 
     class FakeResponse:
+        def __init__(self, payload: dict) -> None:
+            self.payload = payload
+
         def raise_for_status(self) -> None:
             return None
 
         def json(self) -> dict:
-            return {
+            return self.payload
+
+    class FakeAsyncClient:
+        async def get(self, url: str, params: dict, headers: dict):
+            calls.append({"url": url, "params": params, "headers": headers})
+            if url.endswith("/x/web-interface/card"):
+                return FakeResponse({"code": -404})
+            return FakeResponse({
                 "code": 0,
                 "data": {
                     "data": [
@@ -265,18 +293,13 @@ def test_space_audio_metadata_keeps_total_when_list_limit_stops_first_page(monke
                     "pageSize": 30,
                     "totalSize": 7,
                 },
-            }
-
-    class FakeAsyncClient:
-        async def get(self, url: str, params: dict, headers: dict):
-            calls.append({"url": url, "params": params, "headers": headers})
-            return FakeResponse()
+            })
 
     site = bilibili.BilibiliSite(list_limit=1, http_client_provider=lambda: FakeAsyncClient())
 
     value = asyncio.run(site.space_audio_metadata("https://space.bilibili.com/60000003/upload/audio"))
 
-    assert len(calls) == 1
+    assert len(calls) == 2
     assert value["total"] == 7
     assert value["entries"] == [{"id": 40000001, "title": "Sample Song"}]
 

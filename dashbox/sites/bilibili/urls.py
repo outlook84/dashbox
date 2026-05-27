@@ -22,6 +22,7 @@ CollectionRoute = Literal[
     "medialist",
     "space_collection",
     "space_series",
+    "space_video",
     "bangumi_season",
     "bangumi_media",
     "cheese",
@@ -36,6 +37,7 @@ COLLECTION_ROUTE_KINDS: dict[CollectionRoute, CollectionKind] = {
     "medialist": "medialist",
     "space_collection": "medialist",
     "space_series": "medialist",
+    "space_video": "medialist",
     "bangumi_season": "bangumi",
     "bangumi_media": "bangumi",
     "cheese": "cheese",
@@ -398,6 +400,10 @@ def is_space_series_url(url: str) -> bool:
     return bool(space_series_ids_from_url(url))
 
 
+def is_space_video_url(url: str) -> bool:
+    return bool(space_video_mid_from_url(url))
+
+
 def is_space_audio_url(url: str) -> bool:
     return bool(space_audio_mid_from_url(url))
 
@@ -657,6 +663,17 @@ def space_audio_mid_from_url(url: str) -> str:
     return ""
 
 
+def space_video_mid_from_url(url: str) -> str:
+    segments = tuple(segment.lower() for segment in url_path_segments_for_host(url, "space.bilibili.com"))
+    if len(segments) == 1 and segments[0].isdigit():
+        return segments[0]
+    if len(segments) == 2 and segments[0].isdigit() and segments[1] == "video":
+        return segments[0]
+    if len(segments) == 3 and segments[0].isdigit() and segments[1:] == ("upload", "video"):
+        return segments[0]
+    return ""
+
+
 def space_audio_light_metadata(url: str) -> dict[str, Any]:
     mid = space_audio_mid_from_url(url)
     return {"title": i18n.bilibili_audio_title(mid)} if mid else {}
@@ -666,6 +683,7 @@ COLLECTION_ROUTE_CHECKS: tuple[tuple[CollectionRoute, Callable[[str], bool]], ..
     ("medialist", is_medialist_url),
     ("space_collection", is_space_collection_url),
     ("space_series", is_space_series_url),
+    ("space_video", is_space_video_url),
     ("bangumi_season", is_bangumi_season_url),
     ("bangumi_media", is_bangumi_media_url),
     ("cheese", is_cheese_season_url),

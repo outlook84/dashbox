@@ -82,7 +82,12 @@
                 "url": "https://www.bilibili.com/video/BV1111111",
                 "title": "可选标题覆盖",
                 "pic": "",
-                "remarks": "可配置视频、合集或列表 URL"
+                "remarks": "可配置视频、合集、列表或用户空间投稿 URL"
+              },
+              {
+                "id": "example_bilibili_space_videos",
+                "url": "https://space.bilibili.com/208259/video",
+                "remarks": "用户空间投稿列表"
               }
             ]
           },

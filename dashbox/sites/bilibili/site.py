@@ -22,6 +22,7 @@ from .auth import (
     wbi_image_key,
     wbi_mixin_key_from_nav,
     encode_wbi_params,
+    add_wbi2_params,
     wbi_signature_is_invalid,
 )
 from .nodes import (
@@ -116,6 +117,7 @@ from .urls import (
     is_favorites_url,
     is_space_collection_url,
     is_space_series_url,
+    is_space_video_url,
     is_space_audio_url,
     bvid_from_url,
     _is_bvid,
@@ -141,6 +143,7 @@ from .urls import (
     favorites_id_from_url,
     space_collection_ids_from_url,
     space_series_ids_from_url,
+    space_video_mid_from_url,
     space_audio_mid_from_url,
     space_audio_light_metadata as _default_space_audio_light_metadata,
 )
@@ -628,6 +631,148 @@ class BilibiliSite:
         payload = response.json()
         return payload if isinstance(payload, dict) else {}
 
+    async def space_video_metadata(self, url: str) -> dict[str, Any]:
+        mid = space_video_mid_from_url(url)
+        if not mid:
+            return {}
+        try:
+            entries: list[dict[str, Any]] = []
+            total = 0
+            user_info: dict[str, Any] = {}
+            async with self.http_client() as client:
+                user_info = await self._space_user_info(client, url, mid)
+                cookies = await self.wbi_cookies(client)
+                mixin_key = await self.wbi_mixin_key(client, cookies)
+                for page_num in range(1, self.list_page_limit() + 1):
+                    payload = await self._space_video_page_payload(
+                        client,
+                        url,
+                        mid,
+                        page_num=page_num,
+                        page_size=30,
+                        cookies=cookies,
+                        mixin_key=mixin_key,
+                    )
+                    if payload.get("code") != 0 or not isinstance(payload.get("data"), dict):
+                        logger.warning("bilibili space video invalid url=%s code=%s message=%s", url, payload.get("code"), payload.get("message"))
+                        return {}
+                    data = payload["data"]
+                    list_data = data.get("list") if isinstance(data.get("list"), dict) else {}
+                    page_entries = dict_list(list_data.get("vlist"))
+                    if page_num == 1:
+                        total = self._space_video_total(data)
+                    if _append_limited_entries(entries, page_entries, self.list_limit):
+                        break
+                    if not page_entries or len(page_entries) < 30 or (total and len(entries) >= total):
+                        break
+            return {
+                **self._space_owner_metadata(mid, user_info, i18n.bilibili_video(), i18n.bilibili_video_title(mid)),
+                "total": total,
+                "entries": entries,
+            }
+        except Exception as exc:
+            logger.debug("bilibili space video failed url=%s error=%s", url, exc)
+            return {}
+
+    async def space_video_light_metadata(self, url: str) -> dict[str, Any]:
+        mid = space_video_mid_from_url(url)
+        if not mid:
+            return {}
+        try:
+            async with self.http_client() as client:
+                user_info = await self._space_user_info(client, url, mid)
+                cookies = await self.wbi_cookies(client)
+                mixin_key = await self.wbi_mixin_key(client, cookies)
+                payload = await self._space_video_page_payload(
+                    client,
+                    url,
+                    mid,
+                    page_num=1,
+                    page_size=1,
+                    cookies=cookies,
+                    mixin_key=mixin_key,
+                )
+            if payload.get("code") != 0 or not isinstance(payload.get("data"), dict):
+                logger.warning("bilibili space video light invalid url=%s code=%s message=%s", url, payload.get("code"), payload.get("message"))
+                return {}
+            return {
+                **self._space_owner_metadata(mid, user_info, i18n.bilibili_video(), i18n.bilibili_video_title(mid)),
+                "total": self._space_video_total(payload["data"]),
+            }
+        except Exception as exc:
+            logger.debug("bilibili space video light failed url=%s error=%s", url, exc)
+            return {}
+
+    async def _space_user_info(self, client: Any, url: str, mid: str) -> dict[str, Any]:
+        try:
+            api_url = "https://api.bilibili.com/x/web-interface/card"
+            response = await client.get(
+                api_url,
+                params={"mid": mid},
+                headers=self.headers(api_url, url),
+            )
+            response.raise_for_status()
+            payload = response.json()
+            data = payload.get("data") if isinstance(payload, dict) and payload.get("code") == 0 else {}
+            card = data.get("card") if isinstance(data, dict) and isinstance(data.get("card"), dict) else {}
+            return card if isinstance(card, dict) else {}
+        except Exception as exc:
+            logger.debug("bilibili space user info failed url=%s mid=%s error=%s", url, mid, exc)
+            return {}
+
+    def _space_owner_metadata(
+        self,
+        mid: str,
+        user_info: dict[str, Any],
+        label: str,
+        fallback_title: str,
+    ) -> dict[str, Any]:
+        name = str(user_info.get("name") or "").strip()
+        return {
+            "title": f"{name} - {label}" if name else fallback_title,
+            "thumbnail": str(user_info.get("face") or ""),
+            "description": str(user_info.get("sign") or ""),
+        }
+
+    async def _space_video_page_payload(
+        self,
+        client: Any,
+        url: str,
+        mid: str,
+        *,
+        page_num: int,
+        page_size: int,
+        cookies: dict[str, str],
+        mixin_key: str,
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {
+            "mid": mid,
+            "ps": page_size,
+            "tid": 0,
+            "pn": page_num,
+            "keyword": "",
+            "order": "pubdate",
+            "order_avoided": "true",
+            "platform": "web",
+        }
+        return await self.wbi_get_json(
+            client,
+            "https://api.bilibili.com/x/space/wbi/arc/search",
+            add_wbi2_params(params),
+            cookies,
+            mixin_key,
+            referer=url,
+        )
+
+    def _space_video_total(self, data: dict[str, Any]) -> int:
+        page = data.get("page")
+        if isinstance(page, dict):
+            return positive_int(page.get("count") or page.get("total"))
+        list_data = data.get("list")
+        if isinstance(list_data, dict):
+            return positive_int(list_data.get("count") or list_data.get("total"))
+        return 0
+
     async def space_audio_metadata(self, url: str) -> dict[str, Any]:
         mid = space_audio_mid_from_url(url)
         if not mid:
@@ -635,7 +780,9 @@ class BilibiliSite:
         try:
             entries: list[dict[str, Any]] = []
             total = 0
+            user_info: dict[str, Any] = {}
             async with self.http_client() as client:
+                user_info = await self._space_user_info(client, url, mid)
                 for page_num in range(1, self.list_page_limit() + 1):
                     payload = await self._space_audio_page_payload(client, url, mid, page_num=page_num, page_size=30)
                     if payload.get("code") != 0 or not isinstance(payload.get("data"), dict):
@@ -655,7 +802,11 @@ class BilibiliSite:
                         or (not page_count and len(page_entries) < page_size)
                     ):
                         break
-            return {"title": i18n.bilibili_audio_title(mid), "entries": entries, "total": total or len(entries)}
+            return {
+                **self._space_owner_metadata(mid, user_info, i18n.bilibili_audio(), i18n.bilibili_audio_title(mid)),
+                "entries": entries,
+                "total": total or len(entries),
+            }
         except Exception as exc:
             logger.debug("bilibili space audio failed url=%s error=%s", url, exc)
             return {}
@@ -666,12 +817,16 @@ class BilibiliSite:
             return {}
         try:
             async with self.http_client() as client:
+                user_info = await self._space_user_info(client, url, mid)
                 payload = await self._space_audio_page_payload(client, url, mid, page_num=1, page_size=1)
             if payload.get("code") != 0 or not isinstance(payload.get("data"), dict):
                 logger.warning("bilibili space audio light invalid url=%s code=%s message=%s", url, payload.get("code"), payload.get("message"))
                 return {}
             data = payload["data"]
-            return {"title": i18n.bilibili_audio_title(mid), "total": positive_int(data.get("totalSize"))}
+            return {
+                **self._space_owner_metadata(mid, user_info, i18n.bilibili_audio(), i18n.bilibili_audio_title(mid)),
+                "total": positive_int(data.get("totalSize")),
+            }
         except Exception as exc:
             logger.debug("bilibili space audio light failed url=%s error=%s", url, exc)
             return {}
@@ -1154,6 +1309,9 @@ class BilibiliSite:
         if is_space_series_url(url):
             info = await self.space_series_light_metadata(url)
             return light_playlist_node(info, node_id, url, "", "bilibili_series")
+        if is_space_video_url(url):
+            info = await self.space_video_light_metadata(url)
+            return light_playlist_node(info, node_id, url, "", "playlist")
         if is_space_audio_url(url):
             info = await self.space_audio_light_metadata(url)
             return light_playlist_node(info, node_id, url, "", "bilibili_audio")
@@ -1227,6 +1385,7 @@ class BilibiliSite:
             "medialist": self.medialist_metadata,
             "space_collection": self.space_collection_metadata,
             "space_series": self.space_series_metadata,
+            "space_video": self.space_video_metadata,
             "bangumi_season": self.bangumi_season_metadata,
             "bangumi_media": self.bangumi_media_metadata,
             "cheese": self.cheese_season_metadata,

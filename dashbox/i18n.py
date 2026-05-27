@@ -49,6 +49,7 @@ _MESSAGES = {
         "bilibili.favorites": "收藏夹",
         "bilibili.collection": "合集",
         "bilibili.series": "系列",
+        "bilibili.video": "视频",
         "bilibili.audio": "音频",
         "bilibili.bangumi": "番剧",
         "bilibili.course": "课程",
@@ -94,6 +95,7 @@ _MESSAGES = {
         "bilibili.favorites": "Favorites",
         "bilibili.collection": "Collection",
         "bilibili.series": "Series",
+        "bilibili.video": "Videos",
         "bilibili.audio": "Audio",
         "bilibili.bangumi": "Bangumi",
         "bilibili.course": "Course",
@@ -228,6 +230,10 @@ def bilibili_series() -> str:
     return text("bilibili.series")
 
 
+def bilibili_video() -> str:
+    return text("bilibili.video")
+
+
 def bilibili_audio() -> str:
     return text("bilibili.audio")
 
@@ -250,6 +256,10 @@ def bilibili_live_not_started() -> str:
 
 def bilibili_audio_title(mid: str) -> str:
     return f"{mid} - {bilibili_audio()}"
+
+
+def bilibili_video_title(mid: str) -> str:
+    return f"{mid} - {bilibili_video()}"
 
 
 def site_search_title(site: str, keyword: str) -> str:
