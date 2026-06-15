@@ -276,7 +276,7 @@ h2 {
   width: 28px;
 }
 
-.topbar-icon-button :deep(.n-button__content) {
+.topbar-icon-button .n-button__content {
   align-items: center;
   display: inline-flex;
   justify-content: center;
@@ -356,11 +356,11 @@ h2 {
   margin-top: 4px;
 }
 
-.subscription-card :deep(.n-collapse .n-collapse-item .n-collapse-item__header-main) {
+.subscription-card .n-collapse .n-collapse-item .n-collapse-item__header-main {
   font-weight: 600;
 }
 
-.subscription-tabs :deep(.n-tab-pane) {
+.subscription-tabs .n-tab-pane {
   padding-top: 12px;
 }
 
