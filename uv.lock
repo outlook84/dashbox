@@ -430,7 +430,7 @@ wheels = [
 
 [[package]]
 name = "dashbox"
-version = "0.1.8.post202606210805"
+version = "0.1.8.post202606220831"
 source = { editable = "." }
 dependencies = [
     { name = "bcrypt" },
@@ -458,7 +458,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.6.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32.0,<1" },
-    { name = "yt-dlp", extras = ["default", "curl-cffi"], specifier = ">=2026.6.20.234736.dev0" },
+    { name = "yt-dlp", extras = ["default", "curl-cffi"], specifier = ">=2026.6.21.235142.dev0" },
 ]
 provides-extras = ["dev"]
 
@@ -1167,11 +1167,11 @@ wheels = [
 
 [[package]]
 name = "yt-dlp"
-version = "2026.6.20.234736.dev0"
+version = "2026.6.21.235142.dev0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/71/77/51986a24d9cbc628b648b2e360a8b399ae642beda15785ef4b90fa8ec973/yt_dlp-2026.6.20.234736.dev0.tar.gz", hash = "sha256:dbf80bff481fa655416f31d81423f80d4ca54cad4a0f86ac384764dfb9f606d3", size = 3034004, upload-time = "2026-06-20T23:51:50.229Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dd/5f/064325022b28d3481f6af2ab00500d982d5abbe300e2917bbfa549058927/yt_dlp-2026.6.21.235142.dev0.tar.gz", hash = "sha256:49dbcddd395c2160033f25ac69eb7704efaca4e6947aa32978c9ef132d0d45ab", size = 3034130, upload-time = "2026-06-21T23:55:59.815Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0d/b1/86574587178f98c061f233ec11371105f31d51dbe5bf96ee83962d5307bd/yt_dlp-2026.6.20.234736.dev0-py3-none-any.whl", hash = "sha256:064ca2113f5a36a6c038bb5a28bf7d49f51ea3dea6b8ed6f0902c61b4a070c6e", size = 3171296, upload-time = "2026-06-20T23:51:47.902Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/6e/9c59d56354c758e018887fd3f4e587fd496fbdfc4f6ccfc6203309cc3e10/yt_dlp-2026.6.21.235142.dev0-py3-none-any.whl", hash = "sha256:44967179712a9341d8f62843e20cdd447570eb71fbd59adb0dda5862ab8af2d6", size = 3171468, upload-time = "2026-06-21T23:55:57.408Z" },
 ]
 
 [package.optional-dependencies]
